@@ -20,7 +20,7 @@
       "id": 6,
       "name": "Poldergeist Hideout",
       "notes": "",
-      "faction": null,
+      "faction": "Poldergeists",
       "lat": -100.265625,
       "lng": 86.37201008027398
     },
@@ -76,7 +76,7 @@
       "id": 13,
       "name": "Red Pilgrims Landing",
       "notes": "",
-      "faction": null,
+      "faction": "Red Pilgrims",
       "lat": -107.921875,
       "lng": 74.28765906829187
     },
@@ -100,7 +100,7 @@
       "id": 16,
       "name": "The Apothecarium",
       "notes": "Oddrick's business",
-      "faction": null,
+      "faction": "Poldergeists",
       "lat": -71.09375,
       "lng": 72.11753740443893
     },
@@ -108,7 +108,7 @@
       "id": 17,
       "name": "Jeremy's Flat",
       "notes": "",
-      "faction": null,
+      "faction": "Poldergeists",
       "lat": -61.046875,
       "lng": 135.68218068873233
     },
@@ -124,7 +124,7 @@
       "id": 19,
       "name": "Mallory's Basement Flat",
       "notes": "",
-      "faction": null,
+      "faction": "Poldergeists",
       "lat": -74.125,
       "lng": 133.9989565790344
     },
@@ -156,7 +156,7 @@
       "id": 23,
       "name": "Oxbow Holdings Warehouse",
       "notes": "Used by Sulla Vex's quiet Ferrymen",
-      "faction": null,
+      "faction": "Oxbow Holdings",
       "lat": -93.328125,
       "lng": 155.5441779703696
     },
@@ -180,7 +180,7 @@
       "id": 26,
       "name": "Misst's Treehouse",
       "notes": "",
-      "faction": null,
+      "faction": "Poldergeists",
       "lat": -122.54684602032624,
       "lng": 33.51470421607335
     },
@@ -202,6 +202,7 @@
     }
   ],
   "factions": {
+    "Poldergeists": "#043004",
     "Underlane Bank": "#b53434",
     "Bronze Crows": "#d04d38",
     "Rippy Joe's Slicers": "#c76641",
@@ -214,11 +215,13 @@
     "The Crystal Cutters": "#9cbe2c",
     "The Maskers": "#96c741",
     "The Loopers": "#84d038",
+    "Oxbow Holdings": "#b07c1c",
     "The Musician's Guild": "#63b534",
     "Noctal Song": "#5bd038",
     "The Scattered League": "#4dc741",
     "The Glimmershade Syndicate": "#2cbe33",
     "The Dusty Gals": "#41c759",
+    "Red Pilgrims": "#f70a3d",
     "Velarian Army": "#38d069",
     "The Guilds Mercantile": "#34b56f",
     "Navy of the Republic": "#38d092",
@@ -589,6 +592,44 @@
         [
           -78.71875,
           131.7187469490615
+        ]
+      ]
+    },
+    {
+      "id": 11,
+      "faction": "Poldergeists",
+      "points": [
+        [
+          -101.1171875,
+          87.16165073311896
+        ],
+        [
+          -101.796875,
+          86.26338866208248
+        ],
+        [
+          -101,
+          85.396370489169
+        ],
+        [
+          -99.9921875,
+          84.74805960311659
+        ],
+        [
+          -99.140625,
+          85.52915705619178
+        ],
+        [
+          -99.078125,
+          86.41960815269752
+        ],
+        [
+          -99.375,
+          87.34911412185701
+        ],
+        [
+          -100.65625,
+          87.40379094357226
         ]
       ]
     }
