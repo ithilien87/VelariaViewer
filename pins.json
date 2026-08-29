@@ -1,10 +1,596 @@
-[
-  {
-    "id": 3,
-    "name": "Unnamed Pin",
-    "notes": "",
-    "cat": "tavern",
-    "lat": -76.25,
-    "lng": 149.68363751186413
-  }
-]
+{
+  "pins": [
+    {
+      "id": 4,
+      "name": "Loopers Prison",
+      "notes": "The main prison facility of the Loopers faction. Partly damaged from a recent attack.",
+      "faction": "The Loopers",
+      "lat": -92.65625,
+      "lng": 74.763754774702
+    },
+    {
+      "id": 5,
+      "name": "Mrs Delaney's Prophetarium",
+      "notes": "(Ruined - burned down)",
+      "faction": null,
+      "lat": -97.390625,
+      "lng": 81.34063194085715
+    },
+    {
+      "id": 6,
+      "name": "Poldergeist Hideout",
+      "notes": "",
+      "faction": null,
+      "lat": -100.265625,
+      "lng": 86.37201008027398
+    },
+    {
+      "id": 7,
+      "name": "Dreamy's Fish Shop",
+      "notes": "The base of Dusty Gals' faction leader, Dreamy.",
+      "faction": "The Dusty Gals",
+      "lat": -104.1875,
+      "lng": 91.27730208558626
+    },
+    {
+      "id": 8,
+      "name": "Arkwright Dicerooms",
+      "notes": "A Dock 3 Lads establishment for gaming.",
+      "faction": "The Dock 3 Lads",
+      "lat": -101.1484375,
+      "lng": 79.55347322647862
+    },
+    {
+      "id": 9,
+      "name": "Garotte Street Outpost",
+      "notes": "(Briefly occupied Loopers outpost, converted from a vandalised shipping office. Abandoned)",
+      "faction": null,
+      "lat": -98.6953125,
+      "lng": 78.8508470549227
+    },
+    {
+      "id": 10,
+      "name": "Logan Baresi's House",
+      "notes": "Home of Logan Baresi, one of the quiet ferrymen",
+      "faction": "Ferrymen",
+      "lat": -108.015625,
+      "lng": 58.82648359508919
+    },
+    {
+      "id": 11,
+      "name": "Fishy Linda's Old Net Storage",
+      "notes": "Underlane Bank-controlled entry to the Veins",
+      "faction": "Underlane Bank",
+      "lat": -124.828125,
+      "lng": 49.71888729223232
+    },
+    {
+      "id": 12,
+      "name": "Bev's Berth on the Burning Rose",
+      "notes": "",
+      "faction": "Blackwater Sirens",
+      "lat": -112.140625,
+      "lng": 68.95062323043334
+    },
+    {
+      "id": 13,
+      "name": "Red Pilgrims Landing",
+      "notes": "",
+      "faction": null,
+      "lat": -107.921875,
+      "lng": 74.28765906829187
+    },
+    {
+      "id": 14,
+      "name": "Vex Financial Services Office",
+      "notes": "Offices of Sulla Vex, Moneylender",
+      "faction": null,
+      "lat": -66.9765625,
+      "lng": 60.63952361120297
+    },
+    {
+      "id": 15,
+      "name": "Doublecross Doubloon",
+      "notes": "Siren hangout",
+      "faction": "Blackwater Sirens",
+      "lat": -68.96875,
+      "lng": 64.09215741010512
+    },
+    {
+      "id": 16,
+      "name": "The Apothecarium",
+      "notes": "Oddrick's business",
+      "faction": null,
+      "lat": -71.09375,
+      "lng": 72.11753740443893
+    },
+    {
+      "id": 17,
+      "name": "Jeremy's Flat",
+      "notes": "",
+      "faction": null,
+      "lat": -61.046875,
+      "lng": 135.68218068873233
+    },
+    {
+      "id": 18,
+      "name": "The Musician's Guildhall",
+      "notes": "",
+      "faction": "The Musician's Guild",
+      "lat": -62.39453125,
+      "lng": 139.14555665132522
+    },
+    {
+      "id": 19,
+      "name": "Mallory's Basement Flat",
+      "notes": "",
+      "faction": null,
+      "lat": -74.125,
+      "lng": 133.9989565790344
+    },
+    {
+      "id": 20,
+      "name": "Dry Dock Inn",
+      "notes": "Ferrymen top-side pub",
+      "faction": "Ferrymen",
+      "lat": -78.375,
+      "lng": 133.2491030240822
+    },
+    {
+      "id": 21,
+      "name": "Traveller's Rest Inn",
+      "notes": "Beau's workplace",
+      "faction": "The Musician's Guild",
+      "lat": -73,
+      "lng": 141.34041532422395
+    },
+    {
+      "id": 22,
+      "name": "The Sixth Ledger",
+      "notes": "Legal offices",
+      "faction": null,
+      "lat": -78.5625,
+      "lng": 149.213877651222
+    },
+    {
+      "id": 23,
+      "name": "Oxbow Holdings Warehouse",
+      "notes": "Used by Sulla Vex's quiet Ferrymen",
+      "faction": null,
+      "lat": -93.328125,
+      "lng": 155.5441779703696
+    },
+    {
+      "id": 24,
+      "name": "Patrizia Ropeyard",
+      "notes": "Ropemakers owned by Norma Patrizia, friend to the Varen family of Ferrymen",
+      "faction": null,
+      "lat": -95.8125,
+      "lng": 160.87126260034248
+    },
+    {
+      "id": 25,
+      "name": "Backyard Sluice",
+      "notes": "A sewer grate leading deep into the Vault Layer - uncovered on a mission with the Underlane Bank",
+      "faction": null,
+      "lat": -95.109375,
+      "lng": 57.29577208573372
+    },
+    {
+      "id": 26,
+      "name": "Misst's Treehouse",
+      "notes": "",
+      "faction": null,
+      "lat": -122.54684602032624,
+      "lng": 33.51470421607335
+    },
+    {
+      "id": 27,
+      "name": "Strange Well",
+      "notes": "Possibly how to contact the Noctal Song?",
+      "faction": "Noctal Song",
+      "lat": -86.09372102032624,
+      "lng": 156.38429490212005
+    },
+    {
+      "id": 28,
+      "name": "McTavish Custodial House 3",
+      "notes": "Secure depository owned by McTavish Custodial security contractors",
+      "faction": null,
+      "lat": -83.78122102032624,
+      "lng": 150.0574055322109
+    }
+  ],
+  "factions": {
+    "Underlane Bank": "#b53434",
+    "Bronze Crows": "#d04d38",
+    "Rippy Joe's Slicers": "#c76641",
+    "The Cutpurse Crew": "#be682c",
+    "Blackwater Sirens": "#c78a41",
+    "Baron Sand": "#d0a038",
+    "The Deadman's Doors": "#b59e34",
+    "The Dock 3 Lads": "#d0c938",
+    "The Mudbay Stags": "#bbc741",
+    "The Crystal Cutters": "#9cbe2c",
+    "The Maskers": "#96c741",
+    "The Loopers": "#84d038",
+    "The Musician's Guild": "#63b534",
+    "Noctal Song": "#5bd038",
+    "The Scattered League": "#4dc741",
+    "The Glimmershade Syndicate": "#2cbe33",
+    "The Dusty Gals": "#41c759",
+    "Velarian Army": "#38d069",
+    "The Guilds Mercantile": "#34b56f",
+    "Navy of the Republic": "#38d092",
+    "Purple Lotus Guild": "#41c7a3",
+    "Guild of St Gregor": "#2cbeaa",
+    "Khalmara Guild": "#41c7c7",
+    "Noble College of Bankers": "#38bbd0",
+    "Fort Izle Prison": "#3492b5",
+    "Church of Alastor": "#3892d0",
+    "Broken Tower Guild": "#417ec7",
+    "Culcainian Consulate": "#2c5abe",
+    "Library of Velaria": "#4159c7",
+    "Star Sea Trading Company": "#383fd0",
+    "Ostral Song": "#4034b5",
+    "Zantish Embassy": "#5b38d0",
+    "Evenstorm Consulate": "#7241c7",
+    "Amarantan Embassy": "#752cbe",
+    "Sailors": "#9641c7",
+    "Ferrymen": "#ad38d0",
+    "Stonecutters": "#aa34b5",
+    "Polderfolk": "#d038c9",
+    "Underwriters": "#c741af",
+    "Vintners": "#be2c8f",
+    "Chandlers": "#c7418a",
+    "Shipwrights": "#d03876",
+    "Scriveners": "#b53457",
+    "Kirkmuir Mechanistic": "#d0384d"
+  },
+  "territories": [
+    {
+      "id": 1,
+      "faction": "The Dusty Gals",
+      "points": [
+        [
+          -103.828125,
+          87.92034647981353
+        ],
+        [
+          -103.015625,
+          88.9826390159958
+        ],
+        [
+          -101.671875,
+          88.88890732162679
+        ],
+        [
+          -102.046875,
+          91.01349239399133
+        ],
+        [
+          -101.4375,
+          92.52882145295723
+        ],
+        [
+          -105.671875,
+          96.71550380144032
+        ],
+        [
+          -109.421875,
+          92.20076052266565
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "faction": "Bronze Crows",
+      "points": [
+        [
+          -101.0625,
+          80.17060275864719
+        ],
+        [
+          -100.63671875,
+          79.566126326393
+        ],
+        [
+          -99.7890625,
+          80.43675709647624
+        ],
+        [
+          -99.234375,
+          81.2412874731437
+        ],
+        [
+          -99.359375,
+          82.45979949994101
+        ],
+        [
+          -99.78125,
+          82.9675128444399
+        ],
+        [
+          -101.0625,
+          81.45999476000475
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "faction": "The Dock 3 Lads",
+      "points": [
+        [
+          -101.28125,
+          78.89018413938734
+        ],
+        [
+          -100.734375,
+          79.42133040747848
+        ],
+        [
+          -101.25,
+          80.10869616618466
+        ],
+        [
+          -101.796875,
+          79.41351943294772
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "faction": "The Loopers",
+      "points": [
+        [
+          -89.109375,
+          72.18803696517529
+        ],
+        [
+          -87.765625,
+          73.90645136194073
+        ],
+        [
+          -87.125,
+          75.96854863805927
+        ],
+        [
+          -87.03125,
+          77.71820693294772
+        ],
+        [
+          -89.1875,
+          79.73343836188175
+        ],
+        [
+          -91.421875,
+          81.40498691146269
+        ],
+        [
+          -91.78125,
+          81.21752352272463
+        ],
+        [
+          -92.9375,
+          81.17065767554013
+        ],
+        [
+          -93.390625,
+          79.92090175061979
+        ],
+        [
+          -93.890625,
+          79.31164573722114
+        ],
+        [
+          -94.421875,
+          79.06169455223707
+        ],
+        [
+          -94.40625,
+          78.34308489540788
+        ],
+        [
+          -94.671875,
+          77.45263379890216
+        ],
+        [
+          -94.84375,
+          76.45282905896589
+        ],
+        [
+          -95.328125,
+          75.98417058712077
+        ],
+        [
+          -95.375,
+          75.43740236996813
+        ],
+        [
+          -94.765625,
+          74.9218780509385
+        ],
+        [
+          -94.078125,
+          74.5313293244009
+        ],
+        [
+          -93.921875,
+          74.01580500537126
+        ],
+        [
+          -92.171875,
+          72.98475636731199
+        ],
+        [
+          -91.296875,
+          72.35987840485183
+        ],
+        [
+          -90.953125,
+          72.70356128420492
+        ]
+      ]
+    },
+    {
+      "id": 5,
+      "faction": "Blackwater Sirens",
+      "points": [
+        [
+          -111.703125,
+          67.04648447987252
+        ],
+        [
+          -111.234375,
+          67.23394786861057
+        ],
+        [
+          -110.984375,
+          67.85882583107073
+        ],
+        [
+          -111.1875,
+          68.35872820103886
+        ],
+        [
+          -113.9375,
+          70.85824005087952
+        ],
+        [
+          -114.671875,
+          69.32728904285212
+        ]
+      ]
+    },
+    {
+      "id": 6,
+      "faction": "Underlane Bank",
+      "points": [
+        [
+          -124.671875,
+          49.09216046104362
+        ],
+        [
+          -124.140625,
+          49.904501812241826
+        ],
+        [
+          -124.671875,
+          50.31067248784093
+        ],
+        [
+          -125.171875,
+          49.40459944227369
+        ]
+      ]
+    },
+    {
+      "id": 7,
+      "faction": "Blackwater Sirens",
+      "points": [
+        [
+          -68.8515625,
+          63.80457003886791
+        ],
+        [
+          -68.70703125,
+          64.19121327814013
+        ],
+        [
+          -69.10546875,
+          64.37867666687818
+        ],
+        [
+          -69.23046875,
+          63.99203342760595
+        ]
+      ]
+    },
+    {
+      "id": 8,
+      "faction": "The Musician's Guild",
+      "points": [
+        [
+          -62.25,
+          139.05701107565523
+        ],
+        [
+          -62.23046875,
+          138.97499584308233
+        ],
+        [
+          -62.3359375,
+          138.94375194495933
+        ],
+        [
+          -62.3515625,
+          139.064822050186
+        ],
+        [
+          -62.4296875,
+          139.03748363932834
+        ],
+        [
+          -62.453125,
+          139.23275800259717
+        ],
+        [
+          -62.265625,
+          139.28352933704704
+        ]
+      ]
+    },
+    {
+      "id": 9,
+      "faction": "The Musician's Guild",
+      "points": [
+        [
+          -72.9453125,
+          141.10144961527564
+        ],
+        [
+          -72.765625,
+          141.40217213470962
+        ],
+        [
+          -73.140625,
+          141.6950836796128
+        ],
+        [
+          -73.3359375,
+          141.3514008002597
+        ]
+      ]
+    },
+    {
+      "id": 10,
+      "faction": "Ferrymen",
+      "points": [
+        [
+          -78.1640625,
+          131.60158233110022
+        ],
+        [
+          -77.765625,
+          133.28875282974266
+        ],
+        [
+          -78.5,
+          133.60119181097275
+        ],
+        [
+          -78.640625,
+          132.9919357975741
+        ],
+        [
+          -78.3984375,
+          132.86696020508205
+        ],
+        [
+          -78.71875,
+          131.7187469490615
+        ]
+      ]
+    }
+  ]
+}
