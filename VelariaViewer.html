@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velaria</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ============================================================
+     CONFIGURE YOUR MAP HERE
+     ============================================================ */
+  :root { --tile-size: 256; }
+</style>
+
+<style>
+  :root {
+    --ink:        #14171f;
+    --ink-panel:  #1c2130;
+    --ink-line:   #2c3346;
+    --parchment:  #ece0c4;
+    --parchment-dim: #a9a08a;
+    --brass:      #c9a54b;
+    --brass-dim:  #8a713a;
+    --crimson:    #a5453f;
+    --forest:     #4f7a55;
+    --slate:      #5b7189;
+    --plum:       #7a5a8c;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--ink);
+    color: var(--parchment);
+    overflow: hidden;
+  }
+
+  #map {
+    position: absolute;
+    inset: 0;
+    background: #0c0e13;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: absolute;
+    top: 16px; left: 16px; right: 16px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .brand {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    color: var(--brass);
+    background: var(--ink-panel);
+    border: 1px solid var(--ink-line);
+    padding: 10px 16px;
+    border-radius: 8px;
+    pointer-events: auto;
+    white-space: nowrap;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+  .search-wrap {
+    flex: 1;
+    max-width: 360px;
+    pointer-events: auto;
+    position: relative;
+  }
+  .search-wrap input {
+    width: 100%;
+    background: var(--ink-panel);
+    border: 1px solid var(--ink-line);
+    color: var(--parchment);
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+  .search-wrap input::placeholder { color: var(--parchment-dim); }
+  .search-wrap input:focus { outline: 2px solid var(--brass); outline-offset: -1px; }
+
+  .search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0; right: 0;
+    background: var(--ink-panel);
+    border: 1px solid var(--ink-line);
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 260px;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  }
+  .search-results button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    padding: 9px 12px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--ink-line);
+    color: var(--parchment);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+  }
+  .search-results button:last-child { border-bottom: none; }
+  .search-results button:hover { background: rgba(201,165,75,0.12); }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; vertical-align: middle; }
+
+  /* ---------- Add-pin mode toggle ---------- */
+  .add-toggle {
+    pointer-events: auto;
+    background: var(--ink-panel);
+    border: 1px solid var(--ink-line);
+    color: var(--parchment);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 11px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    transition: background 0.15s, color 0.15s;
+  }
+  .add-toggle.active {
+    background: var(--brass);
+    color: var(--ink);
+    border-color: var(--brass);
+  }
+
+  /* ---------- Edit-mode lock + gated controls ---------- */
+  .lock-btn {
+    pointer-events: auto;
+    background: var(--ink-panel);
+    border: 1px solid var(--ink-line);
+    color: var(--parchment-dim);
+    width: 42px; height: 42px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    flex-shrink: 0;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+  .lock-btn.unlocked { color: var(--brass); border-color: var(--brass); }
+  .edit-only { display: none !important; }
+  body.edit-mode .edit-only { display: initial !important; }
+  body.edit-mode .sidebar-footer.edit-only { display: flex !important; }
+  .readonly-note { padding: 14px 16px; font-size: 12px; color: var(--parchment-dim); line-height: 1.5; }
+  body.edit-mode .readonly-note { display: none !important; }
+
+  /* ---------- Sidebar (pin list) ---------- */
+  .sidebar {
+    position: absolute;
+    top: 76px; right: 16px; bottom: 16px;
+    width: 280px;
+    background: var(--ink-panel);
+    border: 1px solid var(--ink-line);
+    border-radius: 10px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    transition: transform 0.2s ease;
+  }
+  .sidebar.collapsed { transform: translateX(310px); }
+  .sidebar-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--ink-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sidebar-header h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    margin: 0;
+    color: var(--brass);
+  }
+  .sidebar-tabs { display: flex; border-bottom: 1px solid var(--ink-line); flex-shrink: 0; }
+  .tab-btn {
+    flex: 1; padding: 9px 4px; background: none; border: none;
+    color: var(--parchment-dim); font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active { color: var(--brass); border-bottom-color: var(--brass); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .faction-row {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 8px; border-radius: 7px;
+  }
+  .faction-row:hover { background: rgba(201,165,75,0.06); }
+  .faction-row input[type=checkbox] { accent-color: var(--brass); flex-shrink: 0; }
+  .faction-row input[type=color] {
+    width: 22px; height: 22px; padding: 0; border: 1px solid var(--ink-line);
+    border-radius: 5px; background: none; cursor: pointer; flex-shrink: 0;
+  }
+  .faction-row .faction-name { flex: 1; font-size: 12.5px; }
+  .faction-filter-actions {
+    display: flex; gap: 8px; padding: 4px 8px 10px;
+  }
+  .faction-filter-actions button {
+    flex: 1; background: var(--ink); border: 1px solid var(--ink-line);
+    color: var(--parchment-dim); font-size: 11px; font-weight: 600;
+    padding: 6px; border-radius: 6px; cursor: pointer;
+  }
+  .faction-filter-actions button:hover { border-color: var(--brass); color: var(--brass); }
+
+  /* ---------- Territory drawing panel ---------- */
+  .draw-panel {
+    position: absolute;
+    top: 76px; left: 16px; z-index: 999;
+    width: 220px;
+    background: var(--ink-panel);
+    border: 1px solid var(--ink-line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+  .draw-panel label { display: block; font-size: 11px; color: var(--parchment-dim); margin-bottom: 5px; }
+  .draw-panel select {
+    width: 100%; background: var(--ink); border: 1px solid var(--ink-line);
+    color: var(--parchment); padding: 7px 8px; border-radius: 6px;
+    font-family: 'Inter', sans-serif; font-size: 12.5px; margin-bottom: 10px; cursor: pointer;
+  }
+  .draw-status { font-size: 12px; color: var(--parchment-dim); margin-bottom: 10px; }
+  .draw-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .draw-actions button {
+    flex: 1; min-width: 62px; background: var(--ink); border: 1px solid var(--ink-line);
+    color: var(--parchment); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+    padding: 7px 4px; border-radius: 6px; cursor: pointer;
+  }
+  .draw-actions button:hover { border-color: var(--brass); color: var(--brass); }
+  #finishPolygonBtn:disabled { opacity: 0.4; cursor: default; }
+  #finishPolygonBtn:disabled:hover { border-color: var(--ink-line); color: var(--parchment); }
+
+  .territory-row {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 8px; border-radius: 7px;
+  }
+  .territory-row:hover { background: rgba(201,165,75,0.06); }
+  .territory-row .swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+  .layer-toggles {
+    display: flex; gap: 14px; padding: 10px 8px 8px;
+    border-bottom: 1px solid var(--ink-line); margin-bottom: 6px;
+  }
+  .layer-toggles label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 600; color: var(--parchment); cursor: pointer;
+  }
+  .layer-toggles input[type=checkbox] { accent-color: var(--brass); }
+  .sidebar-toggle {
+    position: absolute;
+    top: 50%; left: -34px;
+    transform: translateY(-50%);
+    width: 34px; height: 44px;
+    background: var(--ink-panel);
+    border: 1px solid var(--ink-line);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    color: var(--brass);
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: -4px 6px 14px rgba(0,0,0,0.3);
+  }
+  .pin-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .pin-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 8px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .pin-row:hover { background: rgba(201,165,75,0.1); }
+  .pin-row .dot { margin-top: 4px; }
+  .pin-row-text { flex: 1; min-width: 0; }
+  .pin-row-name { font-size: 13.5px; font-weight: 600; }
+  .pin-row-cat { font-size: 11px; color: var(--parchment-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+  .pin-row-del {
+    background: none; border: none; color: var(--parchment-dim);
+    cursor: pointer; font-size: 15px; padding: 2px 6px; line-height: 1;
+  }
+  .pin-row-del:hover { color: var(--crimson); }
+  .empty-note { padding: 20px 12px; color: var(--parchment-dim); font-size: 13px; line-height: 1.5; }
+
+  .sidebar-footer {
+    padding: 10px 12px;
+    border-top: 1px solid var(--ink-line);
+    display: flex;
+    gap: 8px;
+  }
+  .sidebar-footer button {
+    flex: 1;
+    background: var(--ink);
+    border: 1px solid var(--ink-line);
+    color: var(--parchment);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .sidebar-footer button:hover { border-color: var(--brass); color: var(--brass); }
+
+  /* ---------- Pin marker (custom divIcon) ---------- */
+  /* Leaflet already positions this box via iconAnchor (see pinIcon()) —
+     no extra transform here. (Adding one on top was the old zoom-drift
+     bug: it applied a second, fixed-screen-pixel offset in addition to
+     Leaflet's own anchor offset, so the visual position slid relative
+     to the map as the map's scale-per-pixel changed with zoom.) */
+  .map-pin {
+    width: 30px; height: 38px;
+    display: flex; align-items: flex-start; justify-content: center;
+    position: relative;
+  }
+  .map-pin svg { width: 30px; height: 38px; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5)); }
+  .map-pin .glyph {
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    font-size: 13px; color: var(--ink); font-weight: 700;
+  }
+  .map-pin .label {
+    position: absolute;
+    top: 40px; left: 50%; transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 11px; font-weight: 600;
+    color: var(--parchment);
+    background: rgba(20,23,31,0.82);
+    padding: 2px 7px;
+    border-radius: 4px;
+    pointer-events: none;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+  }
+
+  /* ---------- Popup ---------- */
+  .leaflet-popup-content-wrapper {
+    background: var(--ink-panel);
+    color: var(--parchment);
+    border: 1px solid var(--ink-line);
+    border-radius: 8px;
+  }
+  .leaflet-popup-tip { background: var(--ink-panel); }
+  .leaflet-popup-content { margin: 12px 14px; font-family: 'Inter', sans-serif; }
+  .popup-title { font-family: 'Cinzel', serif; font-weight: 700; font-size: 15px; color: var(--brass); margin-bottom: 2px; }
+  .popup-cat { font-size: 11px; color: var(--parchment-dim); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+  .popup-notes { font-size: 13px; line-height: 1.5; white-space: pre-wrap; margin-bottom: 10px; }
+  .popup-actions { display: flex; gap: 8px; }
+  .popup-edit { background: none; border: 1px solid var(--ink-line); color: var(--brass); font-size: 12px; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+  .popup-edit:hover { background: rgba(201,165,75,0.12); }
+  .popup-del { background: none; border: 1px solid var(--ink-line); color: var(--crimson); font-size: 12px; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+  .popup-del:hover { background: rgba(165,69,63,0.15); }
+
+  /* ---------- New pin form modal ---------- */
+  .modal-backdrop {
+    position: absolute; inset: 0; background: rgba(10,12,17,0.55);
+    z-index: 2000; display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: var(--ink-panel);
+    border: 1px solid var(--ink-line);
+    border-radius: 10px;
+    width: 320px;
+    padding: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .modal h3 {
+    font-family: 'Cinzel', serif; color: var(--brass); font-size: 16px; margin: 0 0 14px;
+  }
+  .modal label { display: block; font-size: 12px; color: var(--parchment-dim); margin: 12px 0 5px; }
+  .modal input[type=text], .modal textarea {
+    width: 100%; background: var(--ink); border: 1px solid var(--ink-line);
+    color: var(--parchment); padding: 8px 10px; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 13px;
+  }
+  .modal textarea { resize: vertical; min-height: 60px; }
+  .modal select {
+    width: 100%; background: var(--ink); border: 1px solid var(--ink-line);
+    color: var(--parchment); padding: 8px 10px; border-radius: 6px;
+    font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer;
+  }
+  .modal select:focus { outline: 2px solid var(--brass); outline-offset: -1px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .modal-actions button {
+    flex: 1; padding: 9px; border-radius: 6px; font-family: 'Inter', sans-serif;
+    font-weight: 600; font-size: 13px; cursor: pointer; border: 1px solid var(--ink-line);
+  }
+  .btn-save { background: var(--brass); color: var(--ink); border-color: var(--brass); }
+  .btn-cancel { background: none; color: var(--parchment-dim); }
+
+  /* ---------- Leaflet control overrides ---------- */
+  .leaflet-control-zoom { display: none; } /* replaced by compass control */
+  .compass {
+    position: absolute; bottom: 20px; left: 16px; z-index: 999;
+    width: 64px; height: 64px; cursor: pointer;
+  }
+  .compass button {
+    position: absolute; background: var(--ink-panel); border: 1px solid var(--ink-line);
+    color: var(--brass); width: 26px; height: 26px; border-radius: 50%;
+    font-size: 14px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+  }
+  .compass button:hover { background: var(--brass); color: var(--ink); }
+  .compass .zin  { top: 0; left: 19px; }
+  .compass .zout { bottom: 0; left: 19px; }
+  .compass .reset { top: 19px; left: 19px; }
+
+  .hint {
+    position: absolute; bottom: 20px; left: 96px; z-index: 999;
+    background: var(--ink-panel); border: 1px solid var(--ink-line);
+    color: var(--parchment-dim); font-size: 12px; padding: 8px 12px;
+    border-radius: 7px; pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  }
+  .hint.show { opacity: 1; }
+
+  .draw-controls {
+    position: absolute; bottom: 20px; left: 96px; z-index: 1001;
+    background: var(--ink-panel); border: 1px solid var(--ink-line);
+    border-radius: 7px; padding: 8px 10px; display: none; align-items: center; gap: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+  .draw-controls.show { display: flex; }
+  .draw-controls span { font-size: 12px; color: var(--parchment-dim); margin-right: 4px; }
+  .draw-controls button {
+    background: var(--ink); border: 1px solid var(--ink-line); color: var(--parchment);
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  }
+  .draw-controls button:hover { border-color: var(--brass); color: var(--brass); }
+  .draw-controls .btn-finish { background: var(--brass); color: var(--ink); border-color: var(--brass); }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="topbar">
+  <div class="brand">⚔ Velaria</div>
+  <div class="search-wrap">
+    <input id="searchInput" type="text" placeholder="Search pins…" autocomplete="off">
+    <div id="searchResults" class="search-results" style="display:none;"></div>
+  </div>
+  <button id="addToggle" class="add-toggle edit-only">+ Drop Pin</button>
+  <button id="drawToggle" class="add-toggle edit-only">▱ Draw Territory</button>
+  <button id="lockBtn" class="lock-btn" title="Unlock editing">🔒</button>
+</div>
+
+<div id="drawPanel" class="draw-panel edit-only" style="display:none;">
+  <label>Faction for this shape</label>
+  <select id="drawFaction"></select>
+  <div class="draw-status" id="drawStatus">0 points placed</div>
+  <div class="draw-actions">
+    <button id="undoPointBtn">Undo point</button>
+    <button id="finishPolygonBtn" disabled>Finish shape</button>
+    <button id="cancelPolygonBtn">Cancel</button>
+  </div>
+</div>
+
+<div id="sidebar" class="sidebar">
+  <button id="sidebarToggle" class="sidebar-toggle">›</button>
+  <div class="sidebar-header">
+    <h2 id="sidebarTitle">Velaria</h2>
+    <span id="pinCount" style="font-size:11px;color:var(--parchment-dim);"></span>
+  </div>
+  <div class="sidebar-tabs">
+    <button class="tab-btn active" data-tab="pins">Pins</button>
+    <button class="tab-btn" data-tab="territory">Territory</button>
+    <button class="tab-btn" data-tab="factions">Factions</button>
+  </div>
+  <div id="pinList" class="pin-list tab-panel active"></div>
+  <div id="territoryPanel" class="pin-list tab-panel"></div>
+  <div id="factionList" class="pin-list tab-panel"></div>
+  <div class="readonly-note">Viewing the published map. Only the map owner can add or move pins.</div>
+  <div class="sidebar-footer edit-only">
+    <button id="publishBtn">Publish pins.json</button>
+    <button id="importBtn">Load file</button>
+    <input id="importFile" type="file" accept="application/json" style="display:none;">
+  </div>
+</div>
+
+<div class="compass">
+  <button class="zin" title="Zoom in">+</button>
+  <button class="reset" title="Reset view">◎</button>
+  <button class="zout" title="Zoom out">−</button>
+</div>
+<div id="hint" class="hint">Click the map to place a pin</div>
+<div id="drawControls" class="draw-controls">
+  <span id="drawHint">Click to add points (need 3+)</span>
+  <button id="drawUndo">Undo point</button>
+  <button id="drawCancel">Cancel</button>
+  <button id="drawFinish" class="btn-finish">Finish shape</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ================================================================
+   1. MAP CONFIGURATION — edit these four values for your own map
+   ================================================================
+   After tiling your PNG (see the instructions below the code),
+   fill in:
+   - TILE_URL: path to your tile folder, using {z}/{x}/{y}.png
+   - IMAGE_WIDTH / IMAGE_HEIGHT: pixel dimensions of the ORIGINAL,
+     untiled PNG (not the tile folder size)
+   - MAX_NATIVE_ZOOM: the highest zoom folder gdal2tiles created
+     (e.g. if it made folders 0,1,2,3,4,5 then this is 5)
+   ================================================================ */
+  const TILE_URL        = "tiles/{z}/{x}/{y}.png";
+  const IMAGE_WIDTH      = 14108;   // px — replace with your map's width
+  const IMAGE_HEIGHT     = 9893;   // px — replace with your map's height
+  const MAX_NATIVE_ZOOM  = 6;      // replace with your tiler's max zoom folder
+  const MIN_ZOOM         = 0;
+  const MAX_ZOOM         = MAX_NATIVE_ZOOM + 2; // allow a bit of over-zoom
+
+  // PINS_URL: a JSON file sitting next to this page that everyone's
+  // browser fetches on load — this is the shared, public pin layer.
+  const PINS_URL = "pins.json";
+  // EDIT_PASSPHRASE: hides the editing controls from casual visitors.
+  // NOTE: this is a convenience, not real security — anyone can view
+  // this file's source and read the passphrase. Real access control
+  // is that only you can publish a new pins.json to your host.
+  const EDIT_PASSPHRASE = "Velaria";
+
+  // FACTIONS: master list of factions and each one's marker colour.
+  // Tagging a pin with a faction is optional. To add, remove, rename,
+  // or recolour a faction, just edit this list — the name is what's
+  // stored on each pin, so renaming a key here will "orphan" any pin
+  // already tagged with the old name (it'll show as unassigned).
+  const FACTIONS_DEFAULT = {
+    "Underlane Bank": "#b53434",
+    "Bronze Crows": "#d04d38",
+    "Rippy Joe's Slicers": "#c76641",
+    "The Cutpurse Crew": "#be682c",
+    "Blackwater Sirens": "#c78a41",
+    "Baron Sand": "#d0a038",
+    "The Deadman's Doors": "#b59e34",
+    "The Dock 3 Lads": "#d0c938",
+    "The Mudbay Stags": "#bbc741",
+    "The Crystal Cutters": "#9cbe2c",
+    "The Maskers": "#96c741",
+    "The Loopers": "#84d038",
+    "The Musician's Guild": "#63b534",
+    "Noctal Song": "#5bd038",
+    "The Scattered League": "#4dc741",
+    "The Glimmershade Syndicate": "#2cbe33",
+    "The Dusty Gals": "#41c759",
+    "Velarian Army": "#38d069",
+    "The Guilds Mercantile": "#34b56f",
+    "Navy of the Republic": "#38d092",
+    "Purple Lotus Guild": "#41c7a3",
+    "Guild of St Gregor": "#2cbeaa",
+    "Khalmara Guild": "#41c7c7",
+    "Noble College of Bankers": "#38bbd0",
+    "Fort Izle Prison": "#3492b5",
+    "Church of Alastor": "#3892d0",
+    "Broken Tower Guild": "#417ec7",
+    "Culcainian Consulate": "#2c5abe",
+    "Library of Velaria": "#4159c7",
+    "Star Sea Trading Company": "#383fd0",
+    "Ostral Song": "#4034b5",
+    "Zantish Embassy": "#5b38d0",
+    "Evenstorm Consulate": "#7241c7",
+    "Amarantan Embassy": "#752cbe",
+    "Sailors": "#9641c7",
+    "Ferrymen": "#ad38d0",
+    "Stonecutters": "#aa34b5",
+    "Polderfolk": "#d038c9",
+    "Underwriters": "#c741af",
+    "Vintners": "#be2c8f",
+    "Chandlers": "#c7418a",
+    "Shipwrights": "#d03876",
+    "Scriveners": "#b53457",
+    "Kirkmuir Mechanistic": "#d0384d",
+  };
+  const NO_FACTION_COLOR = "#8a93a6"; // marker colour for pins with no faction tagged
+
+  // factionColors is the live, editable copy — starts from the defaults
+  // above, then gets overridden by whatever's saved in pins.json (see
+  // loadPins) so that colour changes made via the Factions panel persist
+  // once published.
+  let factionColors = Object.assign({}, FACTIONS_DEFAULT);
+
+/* ================================================================
+   2. MAP SETUP (CRS.Simple — plain pixel coordinates, no geo data)
+   ================================================================ */
+  const map = L.map('map', {
+    crs: L.CRS.Simple,
+    minZoom: MIN_ZOOM,
+    maxZoom: MAX_ZOOM,
+    zoomControl: false,
+    attributionControl: false,
+  });
+
+  // Compute the pixel bounds of the image at native resolution,
+  // then convert to Leaflet's unprojected coordinate space.
+  const southWest = map.unproject([0, IMAGE_HEIGHT], MAX_NATIVE_ZOOM);
+  const northEast = map.unproject([IMAGE_WIDTH, 0], MAX_NATIVE_ZOOM);
+  const bounds = L.latLngBounds(southWest, northEast);
+
+  L.tileLayer(TILE_URL, {
+    minZoom: MIN_ZOOM,
+    maxZoom: MAX_ZOOM,
+    maxNativeZoom: MAX_NATIVE_ZOOM,
+    noWrap: true,
+    bounds: bounds,
+    tileSize: 256,
+    errorTileUrl: "",
+  }).addTo(map);
+
+  map.setMaxBounds(bounds.pad(0.5));
+  map.fitBounds(bounds);
+
+/* ================================================================
+   3. PIN ICON FACTORY
+   ================================================================ */
+  function pinIcon(faction, name) {
+    const color = (faction && factionColors[faction]) || NO_FACTION_COLOR;
+    const glyph = faction ? faction.charAt(0).toUpperCase() : '';
+    return L.divIcon({
+      className: '',
+      html: `<div class="map-pin">
+               <svg viewBox="0 0 30 38"><path fill="${color}" stroke="#14171f" stroke-width="1.5"
+                 d="M15 1C7.3 1 1 7.2 1 14.8 1 25 15 37 15 37s14-12 14-22.2C29 7.2 22.7 1 15 1z"/></svg>
+               <div class="glyph">${glyph}</div>
+               <div class="label">${escapeHtml(name)}</div>
+             </div>`,
+      iconSize: [30, 38],
+      iconAnchor: [15, 38],
+      popupAnchor: [0, -34],
+    });
+  }
+
+/* ================================================================
+   4. PERSISTENCE — everyone's browser fetches pins.json on load;
+   that's the shared, published pin layer. While in edit mode your
+   changes live in memory (backed up to localStorage so a refresh
+   doesn't lose unpublished work) until you click "Publish pins.json"
+   and replace that file on your host.
+   ================================================================ */
+  const DRAFT_KEY = "citymap.draft.v1";
+  const FILTER_KEY = "citymap.filters.v1"; // per-browser faction visibility choices
+  const LAYER_KEY = "citymap.layers.v1"; // per-browser pins/territories layer toggle
+  let pins = [];
+  let territories = [];
+  let nextId = 1;
+  let nextTerritoryId = 1;
+  let hiddenFactions = new Set(); // faction names (or '__none__') currently hidden from the map
+  let layersVisible = { pins: true, territories: true }; // master show/hide per layer type
+  // territoryLayer is added first so it sits BELOW markerLayer (Leaflet
+  // layers stack in the order they're added to the map).
+  const territoryLayer = L.layerGroup().addTo(map);
+  const territoryShapes = {};
+  const markerLayer = L.layerGroup().addTo(map);
+  const markers = {};
+
+  async function loadPins() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch(e) { draft = null; }
+    let published = { pins: [], factions: {}, territories: [] };
+    try {
+      const res = await fetch(PINS_URL, { cache: 'no-store' });
+      const data = res.ok ? await res.json() : [];
+      // Support both the old plain-array format and the current
+      // { pins, factions, territories } format, so an older pins.json still loads.
+      published = Array.isArray(data)
+        ? { pins: data, factions: {}, territories: [] }
+        : { pins: data.pins || [], factions: data.factions || {}, territories: data.territories || [] };
+    } catch (e) {
+      console.warn('Could not fetch pins.json (this is expected if opening the file directly rather than through a local/web server).');
+    }
+    // If there's a newer unpublished draft sitting in this browser, prefer it.
+    if (draft && Array.isArray(draft.pins) && draft.pins.length >= published.pins.length) {
+      pins = draft.pins;
+      territories = draft.territories || published.territories;
+      factionColors = Object.assign({}, FACTIONS_DEFAULT, draft.factions || published.factions);
+    } else {
+      pins = published.pins;
+      territories = published.territories;
+      factionColors = Object.assign({}, FACTIONS_DEFAULT, published.factions);
+    }
+    nextId = pins.reduce((m,p) => Math.max(m, p.id||0), 0) + 1;
+    nextTerritoryId = territories.reduce((m,t) => Math.max(m, t.id||0), 0) + 1;
+
+    try {
+      hiddenFactions = new Set(JSON.parse(localStorage.getItem(FILTER_KEY)) || []);
+    } catch(e) { hiddenFactions = new Set(); }
+    try {
+      layersVisible = Object.assign({ pins: true, territories: true }, JSON.parse(localStorage.getItem(LAYER_KEY)) || {});
+    } catch(e) { layersVisible = { pins: true, territories: true }; }
+  }
+
+  function save() {
+    // Draft-only save; does NOT touch the published pins.json.
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ pins, factions: factionColors, territories }));
+  }
+
+  function factionVisible(faction) {
+    return !hiddenFactions.has(faction || '__none__');
+  }
+  function pinVisible(pin) {
+    return layersVisible.pins && factionVisible(pin.faction);
+  }
+  function territoryVisible(t) {
+    return layersVisible.territories && factionVisible(t.faction);
+  }
+
+  function renderAll() {
+    markerLayer.clearLayers();
+    Object.keys(markers).forEach(k => delete markers[k]);
+    pins.filter(pinVisible).forEach(addMarker);
+
+    territoryLayer.clearLayers();
+    Object.keys(territoryShapes).forEach(k => delete territoryShapes[k]);
+    territories.filter(territoryVisible).forEach(addTerritory);
+
+    renderList();
+    renderTerritoryList();
+    renderFactionPanel();
+  }
+
+  function addMarker(pin) {
+    const m = L.marker([pin.lat, pin.lng], { icon: pinIcon(pin.faction, pin.name) });
+    m.bindPopup(popupHtml(pin));
+    m.on('popupopen', () => {
+      const editBtn = document.querySelector(`.popup-edit[data-id="${pin.id}"]`);
+      if (editBtn) editBtn.onclick = () => { map.closePopup(); openPinModal(pin); };
+      const delBtn = document.querySelector(`.popup-del[data-id="${pin.id}"]`);
+      if (delBtn) delBtn.onclick = () => deletePin(pin.id);
+    });
+    m.addTo(markerLayer);
+    markers[pin.id] = m;
+    return m;
+  }
+
+  function popupHtml(pin) {
+    const color = (pin.faction && factionColors[pin.faction]) || NO_FACTION_COLOR;
+    return `<div class="popup-title">${escapeHtml(pin.name)}</div>
+            <div class="popup-cat">${pin.faction ? `<span class="dot" style="background:${color};"></span> ${escapeHtml(pin.faction)}` : 'No faction'}</div>
+            ${pin.notes ? `<div class="popup-notes">${escapeHtml(pin.notes)}</div>` : ''}
+            ${editMode ? `<div class="popup-actions">
+              <button class="popup-edit" data-id="${pin.id}">Edit</button>
+              <button class="popup-del" data-id="${pin.id}">Delete</button>
+            </div>` : ''}`;
+  }
+
+  function escapeHtml(s) {
+    return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function deletePin(id) {
+    pins = pins.filter(p => p.id !== id);
+    save();
+    renderAll();
+  }
+
+  function addTerritory(t) {
+    const color = factionColors[t.faction] || NO_FACTION_COLOR;
+    const poly = L.polygon(t.points, {
+      color: color, weight: 1.5, opacity: 0.75,
+      fillColor: color, fillOpacity: 0.28,
+    });
+    poly.bindPopup(`<div class="popup-title">${escapeHtml(t.faction)}</div>
+      <div class="popup-cat">Territory</div>
+      ${editMode ? `<div class="popup-actions"><button class="popup-del" data-territory-id="${t.id}">Delete shape</button></div>` : ''}`);
+    poly.on('popupopen', () => {
+      const delBtn = document.querySelector(`.popup-del[data-territory-id="${t.id}"]`);
+      if (delBtn) delBtn.onclick = () => deleteTerritory(t.id);
+    });
+    poly.addTo(territoryLayer);
+    territoryShapes[t.id] = poly;
+    return poly;
+  }
+
+  function deleteTerritory(id) {
+    territories = territories.filter(t => t.id !== id);
+    save();
+    renderAll();
+  }
+
+/* ================================================================
+   5. EDIT-MODE LOCK
+   ================================================================ */
+  let editMode = false;
+  const lockBtn = document.getElementById('lockBtn');
+
+  lockBtn.onclick = () => {
+    if (editMode) {
+      editMode = false;
+      document.body.classList.remove('edit-mode');
+      lockBtn.textContent = '🔒';
+      lockBtn.classList.remove('unlocked');
+      lockBtn.title = 'Unlock editing';
+      addMode = false;
+      addToggle.classList.remove('active');
+      hint.classList.remove('show');
+      cancelDrawing();
+      map.getContainer().style.cursor = '';
+      return;
+    }
+    const attempt = prompt('Editing passphrase:');
+    if (attempt === null) return;
+    if (attempt === EDIT_PASSPHRASE) {
+      editMode = true;
+      document.body.classList.add('edit-mode');
+      lockBtn.textContent = '🔓';
+      lockBtn.classList.add('unlocked');
+      lockBtn.title = 'Lock editing';
+      renderAll(); // re-render so delete buttons / popups reflect edit mode
+    } else {
+      alert('Incorrect passphrase.');
+    }
+  };
+
+/* ================================================================
+   6. ADD-PIN FLOW
+   ================================================================ */
+  let addMode = false;
+  let pendingLatLng = null;
+  const addToggle = document.getElementById('addToggle');
+  const hint = document.getElementById('hint');
+
+  addToggle.onclick = () => {
+    if (!editMode) return;
+    addMode = !addMode;
+    if (addMode) cancelDrawing();
+    addToggle.classList.toggle('active', addMode);
+    hint.classList.toggle('show', addMode);
+    map.getContainer().style.cursor = addMode ? 'crosshair' : '';
+  };
+
+  map.on('click', (e) => {
+    if (!editMode || !addMode) return;
+    pendingLatLng = e.latlng;
+    openPinModal(null);
+  });
+
+  // Opens the pin form. Pass an existing pin object to edit it in place,
+  // or null to create a new pin at pendingLatLng.
+  function openPinModal(existingPin) {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    const factionOptions = Object.keys(FACTIONS_DEFAULT).map(name =>
+      `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h3>${existingPin ? 'Edit Pin' : 'New Pin'}</h3>
+        <label>Name</label>
+        <input type="text" id="pinName" placeholder="e.g. The Gilded Boar">
+        <label>Faction <span style="color:var(--parchment-dim);font-weight:400;">(optional)</span></label>
+        <select id="pinFaction">
+          <option value="">— No faction —</option>
+          ${factionOptions}
+        </select>
+        <label>Notes</label>
+        <textarea id="pinNotes" placeholder="Optional details, hooks, contacts…"></textarea>
+        <div class="modal-actions">
+          <button class="btn-cancel" id="cancelBtn">Cancel</button>
+          <button class="btn-save" id="saveBtn">${existingPin ? 'Save Changes' : 'Save Pin'}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(backdrop);
+
+    const nameInput = backdrop.querySelector('#pinName');
+    const factionSelect = backdrop.querySelector('#pinFaction');
+    const notesInput = backdrop.querySelector('#pinNotes');
+    if (existingPin) {
+      nameInput.value = existingPin.name;
+      factionSelect.value = existingPin.faction || '';
+      notesInput.value = existingPin.notes || '';
+    }
+
+    backdrop.querySelector('#cancelBtn').onclick = () => backdrop.remove();
+    backdrop.querySelector('#saveBtn').onclick = () => {
+      const name = nameInput.value.trim() || 'Unnamed Pin';
+      const notes = notesInput.value.trim();
+      const faction = factionSelect.value || null;
+
+      if (existingPin) {
+        existingPin.name = name;
+        existingPin.notes = notes;
+        existingPin.faction = faction;
+        map.closePopup();
+        save();
+        renderAll();
+      } else {
+        const pin = {
+          id: nextId++,
+          name, notes, faction,
+          lat: pendingLatLng.lat, lng: pendingLatLng.lng,
+        };
+        pins.push(pin);
+        save();
+        renderAll();
+      }
+      backdrop.remove();
+    };
+    backdrop.querySelector('#pinName').focus();
+  }
+
+/* ================================================================
+   6b. TERRITORY DRAWING
+   Click "Draw Territory", pick a faction, then click the map to lay
+   down vertices (a dashed preview shows as you go). "Finish shape"
+   needs at least 3 points and saves that polygon under the chosen
+   faction; the panel stays open so you can start another shape
+   right away — factions can have any number of disjoint territories.
+   ================================================================ */
+  let drawMode = false;
+  let drawPoints = [];
+  let drawPreview = null;
+  const drawToggle = document.getElementById('drawToggle');
+  const drawPanel = document.getElementById('drawPanel');
+  const drawFactionSelect = document.getElementById('drawFaction');
+  const drawStatus = document.getElementById('drawStatus');
+  const finishPolygonBtn = document.getElementById('finishPolygonBtn');
+
+  drawFactionSelect.innerHTML = Object.keys(FACTIONS_DEFAULT).map(name =>
+    `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+
+  drawToggle.onclick = () => {
+    if (!editMode) return;
+    if (drawMode) { cancelDrawing(); return; }
+    // Drawing and pin-dropping are mutually exclusive map-click modes.
+    if (addMode) {
+      addMode = false;
+      addToggle.classList.remove('active');
+      hint.classList.remove('show');
+    }
+    drawMode = true;
+    drawPoints = [];
+    drawToggle.classList.add('active');
+    drawPanel.style.display = 'block';
+    map.doubleClickZoom.disable();
+    map.getContainer().style.cursor = 'crosshair';
+    updateDrawPreview();
+  };
+
+  drawFactionSelect.onchange = updateDrawPreview;
+
+  map.on('click', (e) => {
+    if (!drawMode) return;
+    drawPoints.push(e.latlng);
+    updateDrawPreview();
+  });
+
+  function updateDrawPreview() {
+    drawStatus.textContent = `${drawPoints.length} point${drawPoints.length === 1 ? '' : 's'} placed`;
+    finishPolygonBtn.disabled = drawPoints.length < 3;
+    if (drawPreview) { map.removeLayer(drawPreview); drawPreview = null; }
+    if (drawPoints.length < 2) return;
+    const color = factionColors[drawFactionSelect.value] || NO_FACTION_COLOR;
+    drawPreview = L.polygon(drawPoints, {
+      color: color, weight: 2, dashArray: '5,5',
+      fillColor: color, fillOpacity: 0.2,
+    }).addTo(map);
+  }
+
+  document.getElementById('undoPointBtn').onclick = () => {
+    drawPoints.pop();
+    updateDrawPreview();
+  };
+
+  document.getElementById('cancelPolygonBtn').onclick = () => cancelDrawing();
+
+  finishPolygonBtn.onclick = () => {
+    if (drawPoints.length < 3) return;
+    const territory = {
+      id: nextTerritoryId++,
+      faction: drawFactionSelect.value,
+      points: drawPoints.map(p => [p.lat, p.lng]),
+    };
+    territories.push(territory);
+    save();
+    drawPoints = [];
+    updateDrawPreview();
+    renderAll(); // draws the finished shape and refreshes the Territory tab
+  };
+
+  function cancelDrawing() {
+    drawMode = false;
+    drawPoints = [];
+    if (drawPreview) { map.removeLayer(drawPreview); drawPreview = null; }
+    drawToggle.classList.remove('active');
+    drawPanel.style.display = 'none';
+    map.doubleClickZoom.enable();
+    map.getContainer().style.cursor = '';
+  }
+
+  function renderTerritoryList() {
+    const list = territories.filter(territoryVisible);
+    const el = document.getElementById('territoryPanel');
+    el.innerHTML = '';
+    if (!list.length) {
+      const msg = territories.length ? 'All territory shapes are hidden — check the Factions tab.' :
+        (editMode ? 'No shapes yet. Click "Draw Territory" above the map, pick a faction, then click the map to place vertices.' : 'No territory published yet.');
+      el.innerHTML = `<div class="empty-note">${msg}</div>`;
+      return;
+    }
+    list.forEach(t => {
+      const color = factionColors[t.faction] || NO_FACTION_COLOR;
+      const row = document.createElement('div');
+      row.className = 'territory-row';
+      row.innerHTML = `<span class="swatch" style="background:${color};"></span>
+        <div class="pin-row-text">${escapeHtml(t.faction)}</div>
+        ${editMode ? `<button class="pin-row-del" data-territory-id="${t.id}" title="Delete">×</button>` : ''}`;
+      row.querySelector('.pin-row-text').onclick = () => {
+        const shape = territoryShapes[t.id];
+        if (shape) { map.fitBounds(shape.getBounds(), { maxZoom: MAX_NATIVE_ZOOM }); shape.openPopup(); }
+      };
+      const delBtn = row.querySelector('.pin-row-del');
+      if (delBtn) delBtn.onclick = (e) => { e.stopPropagation(); deleteTerritory(t.id); };
+      el.appendChild(row);
+    });
+  }
+
+/* ================================================================
+   7. SIDEBAR LIST + SEARCH
+   ================================================================ */
+  const pinListEl = document.getElementById('pinList');
+  const pinCountEl = document.getElementById('pinCount');
+
+  function renderList(filter) {
+    const visiblePins = pins.filter(pinVisible);
+    const list = filter
+      ? visiblePins.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
+      : visiblePins;
+    pinCountEl.textContent = visiblePins.length ? `${visiblePins.length} shown` : '';
+    pinListEl.innerHTML = '';
+    if (!list.length) {
+      const emptyMsg = visiblePins.length ? 'No pins match your search.' :
+        (pins.length ? 'All pins are hidden — check the Factions tab.' :
+        (editMode ? 'No pins yet. Click "Drop Pin", then click anywhere on the map.' : 'No pins published yet.'));
+      pinListEl.innerHTML = `<div class="empty-note">${emptyMsg}</div>`;
+      return;
+    }
+    list.forEach(pin => {
+      const color = (pin.faction && factionColors[pin.faction]) || NO_FACTION_COLOR;
+      const row = document.createElement('div');
+      row.className = 'pin-row';
+      row.innerHTML = `<span class="dot" style="background:${color};margin-top:4px;"></span>
+        <div class="pin-row-text">
+          <div class="pin-row-name">${escapeHtml(pin.name)}</div>
+          <div class="pin-row-cat">${pin.faction ? escapeHtml(pin.faction) : 'No faction'}</div>
+        </div>
+        ${editMode ? `<button class="pin-row-del" data-id="${pin.id}" title="Delete">×</button>` : ''}`;
+      row.querySelector('.pin-row-text').onclick = () => flyToPin(pin);
+      row.querySelector('.dot').onclick = () => flyToPin(pin);
+      const delBtn = row.querySelector('.pin-row-del');
+      if (delBtn) delBtn.onclick = (e) => { e.stopPropagation(); deletePin(pin.id); };
+      pinListEl.appendChild(row);
+    });
+  }
+
+  function flyToPin(pin) {
+    map.flyTo([pin.lat, pin.lng], Math.max(map.getZoom(), MAX_NATIVE_ZOOM - 1));
+    setTimeout(() => markers[pin.id] && markers[pin.id].openPopup(), 400);
+  }
+
+  const searchInput = document.getElementById('searchInput');
+  const searchResults = document.getElementById('searchResults');
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim();
+    if (!q) { searchResults.style.display = 'none'; return; }
+    const matches = pins.filter(pinVisible).filter(p => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+    if (!matches.length) { searchResults.style.display = 'none'; return; }
+    searchResults.innerHTML = '';
+    matches.forEach(pin => {
+      const color = (pin.faction && factionColors[pin.faction]) || NO_FACTION_COLOR;
+      const btn = document.createElement('button');
+      btn.innerHTML = `<span class="dot" style="background:${color};"></span>${escapeHtml(pin.name)}`;
+      btn.onclick = () => { flyToPin(pin); searchResults.style.display = 'none'; searchInput.value = pin.name; };
+      searchResults.appendChild(btn);
+    });
+    searchResults.style.display = 'block';
+  });
+  document.addEventListener('click', (e) => {
+    if (!searchResults.contains(e.target) && e.target !== searchInput) searchResults.style.display = 'none';
+  });
+
+/* ================================================================
+   7b. TABS + FACTIONS PANEL
+   Visibility checkboxes are available to everyone (this is just a
+   personal view filter, remembered in your own browser). Colour
+   pickers only appear once editing is unlocked, since a colour
+   change is a real edit that needs publishing to take effect for
+   everyone else.
+   ================================================================ */
+  const TAB_PANELS = { pins: 'pinList', territory: 'territoryPanel', factions: 'factionList' };
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(TAB_PANELS[btn.dataset.tab]).classList.add('active');
+    };
+  });
+
+  const factionListEl = document.getElementById('factionList');
+
+  function renderFactionPanel() {
+    const names = Object.keys(FACTIONS_DEFAULT);
+    const rows = [{ key: '__none__', label: 'No faction', color: NO_FACTION_COLOR, editableColor: false }]
+      .concat(names.map(n => ({ key: n, label: n, color: factionColors[n], editableColor: true })));
+
+    factionListEl.innerHTML = `
+      <div class="layer-toggles">
+        <label><input type="checkbox" id="toggleLayerPins" ${layersVisible.pins ? 'checked' : ''}> Pins</label>
+        <label><input type="checkbox" id="toggleLayerTerritories" ${layersVisible.territories ? 'checked' : ''}> Territories</label>
+      </div>
+      <div class="faction-filter-actions">
+        <button id="showAllFactions">Show all</button>
+        <button id="hideAllFactions">Hide all</button>
+      </div>`;
+
+    document.getElementById('toggleLayerPins').onchange = (e) => {
+      layersVisible.pins = e.target.checked;
+      localStorage.setItem(LAYER_KEY, JSON.stringify(layersVisible));
+      renderAll();
+    };
+    document.getElementById('toggleLayerTerritories').onchange = (e) => {
+      layersVisible.territories = e.target.checked;
+      localStorage.setItem(LAYER_KEY, JSON.stringify(layersVisible));
+      renderAll();
+    };
+
+    rows.forEach(row => {
+      const wrap = document.createElement('div');
+      wrap.className = 'faction-row';
+      wrap.innerHTML = `
+        <input type="checkbox" ${hiddenFactions.has(row.key) ? '' : 'checked'}>
+        ${row.editableColor
+          ? `<input type="color" class="edit-only" value="${row.color}">`
+          : `<span class="dot" style="background:${row.color};"></span>`}
+        <span class="faction-name">${escapeHtml(row.label)}</span>`;
+
+      wrap.querySelector('input[type=checkbox]').onchange = (e) => {
+        if (e.target.checked) hiddenFactions.delete(row.key);
+        else hiddenFactions.add(row.key);
+        localStorage.setItem(FILTER_KEY, JSON.stringify([...hiddenFactions]));
+        renderAll();
+      };
+
+      const colorInput = wrap.querySelector('input[type=color]');
+      if (colorInput) {
+        colorInput.oninput = () => {
+          factionColors[row.key] = colorInput.value;
+          save();
+          markerLayer.clearLayers();
+          Object.keys(markers).forEach(k => delete markers[k]);
+          pins.filter(pinVisible).forEach(addMarker);
+          territoryLayer.clearLayers();
+          Object.keys(territoryShapes).forEach(k => delete territoryShapes[k]);
+          territories.filter(territoryVisible).forEach(addTerritory);
+          // Don't call renderFactionPanel() here — it would rebuild the
+          // colour input mid-drag. The swatch itself already shows the
+          // live colour via the native picker.
+        };
+      }
+      factionListEl.appendChild(wrap);
+    });
+
+    document.getElementById('showAllFactions').onclick = () => {
+      hiddenFactions.clear();
+      localStorage.setItem(FILTER_KEY, JSON.stringify([...hiddenFactions]));
+      renderAll();
+    };
+    document.getElementById('hideAllFactions').onclick = () => {
+      hiddenFactions = new Set(['__none__', ...Object.keys(FACTIONS_DEFAULT)]);
+      localStorage.setItem(FILTER_KEY, JSON.stringify([...hiddenFactions]));
+      renderAll();
+    };
+  }
+
+/* ================================================================
+   8. SIDEBAR COLLAPSE, PUBLISH / LOAD
+   ================================================================ */
+  const sidebar = document.getElementById('sidebar');
+  document.getElementById('sidebarToggle').onclick = () => {
+    sidebar.classList.toggle('collapsed');
+    document.getElementById('sidebarToggle').textContent = sidebar.classList.contains('collapsed') ? '‹' : '›';
+  };
+
+  // Downloads the current pins, faction colours, and territory shapes
+  // as pins.json. Replace the file of the same name on your host
+  // (GitHub repo / Netlify folder) to make these visible to everyone
+  // else who opens the map.
+  document.getElementById('publishBtn').onclick = () => {
+    const blob = new Blob([JSON.stringify({ pins, factions: factionColors, territories }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'pins.json';
+    a.click();
+  };
+  document.getElementById('importFile').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const imported = JSON.parse(reader.result);
+        const data = Array.isArray(imported)
+          ? { pins: imported, factions: {}, territories: [] }
+          : { pins: imported.pins || [], factions: imported.factions || {}, territories: imported.territories || [] };
+        pins = data.pins;
+        territories = data.territories;
+        factionColors = Object.assign({}, FACTIONS_DEFAULT, data.factions);
+        nextId = pins.reduce((m,p) => Math.max(m, p.id||0), 0) + 1;
+        nextTerritoryId = territories.reduce((m,t) => Math.max(m, t.id||0), 0) + 1;
+        save();
+        renderAll();
+      } catch(err) { alert('Could not read that file — is it a pins.json from this map?'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+  document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+
+/* ================================================================
+   9. COMPASS CONTROL
+   ================================================================ */
+  document.querySelector('.compass .zin').onclick = () => map.zoomIn();
+  document.querySelector('.compass .zout').onclick = () => map.zoomOut();
+  document.querySelector('.compass .reset').onclick = () => map.fitBounds(bounds);
+
+/* ================================================================
+   10. INITIAL LOAD
+   ================================================================ */
+  loadPins().then(renderAll);
+</script>
+</body>
+</html>
