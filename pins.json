@@ -215,6 +215,22 @@
       "faction": "The Loopers",
       "lat": -101.71875,
       "lng": 61.15784564083338
+    },
+    {
+      "id": 31,
+      "name": "Sixers Front Room",
+      "notes": "Informal gathering spot of the workers of Dock 6 (sixers)",
+      "faction": null,
+      "lat": -103.203125,
+      "lng": 64.5921757157361
+    },
+    {
+      "id": 32,
+      "name": "Halflinkers Front Room",
+      "notes": "Informal drinking spot of the Halflinker canal workers",
+      "faction": null,
+      "lat": -110.8125,
+      "lng": 55.28051777476098
     }
   ],
   "factions": {
