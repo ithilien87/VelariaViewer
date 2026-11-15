@@ -225,12 +225,12 @@
       "lng": 64.5921757157361
     },
     {
-      "id": 32,
+      "id": 33,
       "name": "Halflinkers Front Room",
       "notes": "Informal drinking spot of the Halflinker canal workers",
       "faction": null,
-      "lat": -110.8125,
-      "lng": 55.28051777476098
+      "lat": -112.671875,
+      "lng": 50.93560841813252
     }
   ],
   "factions": {
