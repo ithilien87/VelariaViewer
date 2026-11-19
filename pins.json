@@ -231,6 +231,30 @@
       "faction": null,
       "lat": -112.671875,
       "lng": 50.93560841813252
+    },
+    {
+      "id": 34,
+      "name": "Eastling Arms",
+      "notes": "Pub recommended to be avoided due to conflict between Mudbay Stags and Slicers",
+      "faction": "The Mudbay Stags",
+      "lat": -106.65625,
+      "lng": 171.6717956755991
+    },
+    {
+      "id": 35,
+      "name": "The Bishop's Flock",
+      "notes": "Pub recommended to be avoided due to conflict between Mudbay Stags and Slicers",
+      "faction": "Rippy Joe's Slicers",
+      "lat": -99.71875,
+      "lng": 163.43902852018647
+    },
+    {
+      "id": 36,
+      "name": "Ragrich Estate",
+      "notes": "The estate of grain baron Abel Ragrich and family",
+      "faction": "The Loopers",
+      "lat": -48.46875,
+      "lng": 141.11681128107688
     }
   ],
   "factions": {
@@ -698,6 +722,66 @@
         [
           -92.1875,
           64.4052798015583
+        ]
+      ]
+    },
+    {
+      "id": 15,
+      "faction": "The Mudbay Stags",
+      "points": [
+        [
+          -120.5,
+          177.04259567725245
+        ],
+        [
+          -123.5625,
+          176.51144940916132
+        ],
+        [
+          -125.84375,
+          176.94886398288344
+        ],
+        [
+          -128.03125,
+          177.82369313032765
+        ],
+        [
+          -128.53125,
+          181.8229120900727
+        ],
+        [
+          -126.21875,
+          183.7600337736992
+        ],
+        [
+          -122.34375,
+          182.85396072813197
+        ],
+        [
+          -120.625,
+          180.07325379518423
+        ]
+      ]
+    },
+    {
+      "id": 16,
+      "faction": "The Dock 3 Lads",
+      "points": [
+        [
+          -101.65895373592002,
+          81.27947176227175
+        ],
+        [
+          -101.04957873592002,
+          82.15430090971599
+        ],
+        [
+          -103.12770373592002,
+          83.68525191774339
+        ],
+        [
+          -103.69020373592002,
+          82.85728861748368
         ]
       ]
     }
