@@ -260,8 +260,19 @@
   .territory-row:hover { background: rgba(201,165,75,0.06); }
   .territory-row .swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
 
+  /* Faction logos: small icon beside names, and the territory watermark */
+  .mini-slot { display: inline-flex; width: 18px; height: 18px; flex-shrink: 0; align-items: center; justify-content: center; }
+  .mini-logo { width: 18px; height: 18px; object-fit: contain; background: #e9dfc4; border-radius: 4px; padding: 1px; }
+  .popup-logo { width: 18px; height: 18px; object-fit: contain; vertical-align: middle; margin-right: 6px; background: #e9dfc4; border-radius: 4px; padding: 1px; }
+  .territory-logo { pointer-events: none; opacity: var(--wm-opacity, 0.4); }
+  .territory-logo img {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+    /* light halo so the dark emblem stays readable on dark or busy map areas */
+    filter: drop-shadow(0 0 1px rgba(255,255,255,0.9)) drop-shadow(0 0 3px rgba(255,255,255,0.6));
+  }
+
   .layer-toggles {
-    display: flex; gap: 14px; padding: 10px 8px 8px;
+    display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 10px 8px 8px;
     border-bottom: 1px solid var(--ink-line); margin-bottom: 6px;
   }
   .layer-toggles label {
@@ -331,18 +342,28 @@
      Leaflet's own anchor offset, so the visual position slid relative
      to the map as the map's scale-per-pixel changed with zoom.) */
   .map-pin {
-    width: 30px; height: 38px;
+    width: 34px; height: 43px;
     display: flex; align-items: flex-start; justify-content: center;
     position: relative;
   }
-  .map-pin svg { width: 30px; height: 38px; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5)); }
-  .map-pin .glyph {
-    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-    font-size: 13px; color: var(--ink); font-weight: 700;
+  /* Leaflet's own CSS gives every <svg> inside the map z-index 200, which
+     would paint the pin's teardrop over its badge — so set explicit
+     stacking: teardrop at 0, badge above it. */
+  .map-pin svg { width: 34px; height: 43px; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5)); z-index: 0; }
+  /* Cream badge in the pin head holds the faction logo; if the logo file
+     is missing the image hides itself and the faction's initial shows. */
+  .pin-badge {
+    position: absolute; left: 50%; top: 16.8px;
+    width: 22px; height: 22px; transform: translate(-50%, -50%);
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 5;
   }
+  .pin-badge .pin-logo { width: 18px; height: 18px; object-fit: contain; }
+  .pin-badge .pin-letter { display: none; font-size: 13px; font-weight: 700; color: var(--ink); }
+  .pin-badge.no-logo .pin-letter { display: block; }
   .map-pin .label {
     position: absolute;
-    top: 40px; left: 50%; transform: translateX(-50%);
+    top: 45px; left: 50%; transform: translateX(-50%);
     white-space: nowrap;
     font-size: 11px; font-weight: 600;
     color: var(--parchment);
@@ -566,6 +587,19 @@
   // is that only you can publish a new pins.json to your host.
   const EDIT_PASSPHRASE = "Velaria";
 
+  // FACTION LOGOS: each faction can have an emblem file in the logos/
+  // folder, named after the faction — lower case, apostrophes dropped,
+  // everything else turned into hyphens — e.g. "Rippy Joe's Slicers"
+  // → logos/rippy-joes-slicers.svg  (see logos/FILENAMES.txt).
+  // Missing files are fine: that faction just shows its initial on pins
+  // and no watermark.
+  const LOGO_FOLDER = "logos/";
+  const LOGO_EXT = "svg";          // change to "png" if your logos are PNG files
+  const WATERMARK_OPACITY = 0.45;  // 0–1, strength of the logo on territories
+  const WATERMARK_MIN_PX = 30;     // hide the watermark if it would be smaller than this on screen
+  const WATERMARK_MAX_PX = 120;    // never draw it larger than this
+  document.documentElement.style.setProperty('--wm-opacity', WATERMARK_OPACITY);
+
   // FACTIONS: master list of factions and each one's marker colour.
   // Tagging a pin with a faction is optional. To add, remove, rename,
   // or recolour a faction, just edit this list — the name is what's
@@ -672,20 +706,41 @@
 /* ================================================================
    3. PIN ICON FACTORY
    ================================================================ */
+  // --- Faction logo helpers ---
+  function factionSlug(name) {
+    return (name || '').toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  function logoSrc(faction) {
+    return LOGO_FOLDER + factionSlug(faction) + '.' + LOGO_EXT;
+  }
+  // Called by an <img>'s onerror: hide it and flag its parent so CSS can
+  // show a fallback (e.g. the faction's initial on a pin).
+  function logoMissing(img) {
+    img.onerror = null;
+    img.style.display = 'none';
+    if (img.parentElement) img.parentElement.classList.add('no-logo');
+  }
+  function logoImg(faction, cls) {
+    if (!faction) return '';
+    return `<img class="${cls}" src="${logoSrc(faction)}" alt="" draggable="false" onerror="logoMissing(this)">`;
+  }
+
   function pinIcon(faction, name) {
     const color = (faction && factionColors[faction]) || NO_FACTION_COLOR;
-    const glyph = faction ? faction.charAt(0).toUpperCase() : '';
+    const letter = faction ? faction.charAt(0).toUpperCase() : '';
+    // Pins with a faction get a cream badge in the head for the logo.
+    const badge = faction ? `<circle cx="15" cy="14.8" r="10.2" fill="#f3ead2" stroke="#14171f" stroke-width="1"/>` : '';
     return L.divIcon({
       className: '',
       html: `<div class="map-pin">
                <svg viewBox="0 0 30 38"><path fill="${color}" stroke="#14171f" stroke-width="1.5"
-                 d="M15 1C7.3 1 1 7.2 1 14.8 1 25 15 37 15 37s14-12 14-22.2C29 7.2 22.7 1 15 1z"/></svg>
-               <div class="glyph">${glyph}</div>
+                 d="M15 1C7.3 1 1 7.2 1 14.8 1 25 15 37 15 37s14-12 14-22.2C29 7.2 22.7 1 15 1z"/>${badge}</svg>
+               ${faction ? `<div class="pin-badge"><span class="pin-letter">${escapeHtml(letter)}</span>${logoImg(faction, 'pin-logo')}</div>` : ''}
                <div class="label">${escapeHtml(name)}</div>
              </div>`,
-      iconSize: [30, 38],
-      iconAnchor: [15, 38],
-      popupAnchor: [0, -34],
+      iconSize: [34, 43],
+      iconAnchor: [17, 43],
+      popupAnchor: [0, -39],
     });
   }
 
@@ -704,11 +759,12 @@
   let nextId = 1;
   let nextTerritoryId = 1;
   let hiddenFactions = new Set(); // faction names (or '__none__') currently hidden from the map
-  let layersVisible = { pins: true, territories: true }; // master show/hide per layer type
+  let layersVisible = { pins: true, territories: true, watermarks: true }; // master show/hide per layer type
   // territoryLayer is added first so it sits BELOW markerLayer (Leaflet
   // layers stack in the order they're added to the map).
   const territoryLayer = L.layerGroup().addTo(map);
   const territoryShapes = {};
+  const watermarkLayer = L.layerGroup().addTo(map);
   const markerLayer = L.layerGroup().addTo(map);
   const markers = {};
 
@@ -744,8 +800,8 @@
       hiddenFactions = new Set(JSON.parse(localStorage.getItem(FILTER_KEY)) || []);
     } catch(e) { hiddenFactions = new Set(); }
     try {
-      layersVisible = Object.assign({ pins: true, territories: true }, JSON.parse(localStorage.getItem(LAYER_KEY)) || {});
-    } catch(e) { layersVisible = { pins: true, territories: true }; }
+      layersVisible = Object.assign({ pins: true, territories: true, watermarks: true }, JSON.parse(localStorage.getItem(LAYER_KEY)) || {});
+    } catch(e) { layersVisible = { pins: true, territories: true, watermarks: true }; }
   }
 
   function save() {
@@ -771,11 +827,90 @@
     territoryLayer.clearLayers();
     Object.keys(territoryShapes).forEach(k => delete territoryShapes[k]);
     territories.filter(territoryVisible).forEach(addTerritory);
+    updateWatermarks();
 
     renderList();
     renderTerritoryList();
     renderFactionPanel();
   }
+
+  /* ---------- Territory logo watermarks ----------
+     Each territory shape gets its faction's logo at the point furthest
+     from its edges (so it sits well inside even odd-shaped or concave
+     territories). The logo is sized to the shape and the current zoom,
+     and left out whenever it would be too small to read — so zooming in
+     makes more of them appear. Coordinates here are plain map units, in
+     which one unit is the same distance in both directions. */
+  const wmCache = {}; // territory id -> { lat, lng, r } (r = clear radius in map units)
+
+  function pointInPoly(x, y, pts) {
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const yi = pts[i][0], xi = pts[i][1], yj = pts[j][0], xj = pts[j][1];
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+  function distToSegment(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    let t = len2 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  }
+  function distToEdges(x, y, pts) {
+    let best = Infinity;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      best = Math.min(best, distToSegment(x, y, pts[j][1], pts[j][0], pts[i][1], pts[i][0]));
+    }
+    return best;
+  }
+  // Approximate "pole of inaccessibility": coarse grid search, then refine.
+  function poleOfInaccessibility(pts) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    pts.forEach(p => { minX = Math.min(minX, p[1]); maxX = Math.max(maxX, p[1]); minY = Math.min(minY, p[0]); maxY = Math.max(maxY, p[0]); });
+    let best = { x: (minX + maxX) / 2, y: (minY + maxY) / 2, d: -Infinity };
+    const consider = (x, y) => {
+      const d = (pointInPoly(x, y, pts) ? 1 : -1) * distToEdges(x, y, pts);
+      if (d > best.d) best = { x, y, d };
+    };
+    const N = 24;
+    for (let i = 0; i <= N; i++) for (let j = 0; j <= N; j++) {
+      consider(minX + (maxX - minX) * i / N, minY + (maxY - minY) * j / N);
+    }
+    let step = Math.max(maxX - minX, maxY - minY) / N;
+    for (let k = 0; k < 6; k++) {
+      step /= 2;
+      const cx = best.x, cy = best.y;
+      for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) consider(cx + dx * step, cy + dy * step);
+    }
+    return { lat: best.y, lng: best.x, r: Math.max(best.d, 0) };
+  }
+  function watermarkSpot(t) {
+    if (!wmCache[t.id]) wmCache[t.id] = poleOfInaccessibility(t.points);
+    return wmCache[t.id];
+  }
+
+  function updateWatermarks() {
+    watermarkLayer.clearLayers();
+    if (!layersVisible.territories || !layersVisible.watermarks) return;
+    const pxPerUnit = map.options.crs.scale(map.getZoom());
+    territories.filter(territoryVisible).forEach(t => {
+      if (!t.faction || t.points.length < 3) return;
+      const spot = watermarkSpot(t);
+      const size = Math.min(WATERMARK_MAX_PX, spot.r * pxPerUnit * 2 * 0.62);
+      if (size < WATERMARK_MIN_PX) return;
+      const icon = L.divIcon({
+        className: 'territory-logo',
+        html: logoImg(t.faction, 'wm-img'),
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      });
+      // Very low z-index offset keeps watermarks underneath every pin.
+      L.marker([spot.lat, spot.lng], { icon, interactive: false, keyboard: false, zIndexOffset: -10000000 }).addTo(watermarkLayer);
+    });
+  }
+  map.on('zoomend', updateWatermarks);
 
   function addMarker(pin) {
     const m = L.marker([pin.lat, pin.lng], { icon: pinIcon(pin.faction, pin.name) });
@@ -794,7 +929,7 @@
   function popupHtml(pin) {
     const color = (pin.faction && factionColors[pin.faction]) || NO_FACTION_COLOR;
     return `<div class="popup-title">${escapeHtml(pin.name)}</div>
-            <div class="popup-cat">${pin.faction ? `<span class="dot" style="background:${color};"></span> ${escapeHtml(pin.faction)}` : 'No faction'}</div>
+            <div class="popup-cat">${pin.faction ? `${logoImg(pin.faction, 'popup-logo')}<span class="dot" style="background:${color};"></span> ${escapeHtml(pin.faction)}` : 'No faction'}</div>
             ${pin.notes ? `<div class="popup-notes">${escapeHtml(pin.notes)}</div>` : ''}
             ${editMode ? `<div class="popup-actions">
               <button class="popup-edit" data-id="${pin.id}">Edit</button>
@@ -818,7 +953,7 @@
       color: color, weight: 1.5, opacity: 0.75,
       fillColor: color, fillOpacity: 0.28,
     });
-    poly.bindPopup(`<div class="popup-title">${escapeHtml(t.faction)}</div>
+    poly.bindPopup(`<div class="popup-title">${logoImg(t.faction, 'popup-logo')}${escapeHtml(t.faction)}</div>
       <div class="popup-cat">Territory</div>
       ${editMode ? `<div class="popup-actions"><button class="popup-del" data-territory-id="${t.id}">Delete shape</button></div>` : ''}`);
     poly.on('popupopen', () => {
@@ -1165,6 +1300,7 @@
       <div class="layer-toggles">
         <label><input type="checkbox" id="toggleLayerPins" ${layersVisible.pins ? 'checked' : ''}> Pins</label>
         <label><input type="checkbox" id="toggleLayerTerritories" ${layersVisible.territories ? 'checked' : ''}> Territories</label>
+        <label><input type="checkbox" id="toggleLayerLogos" ${layersVisible.watermarks ? 'checked' : ''}> Territory logos</label>
       </div>
       <div class="faction-filter-actions">
         <button id="showAllFactions">Show all</button>
@@ -1181,6 +1317,11 @@
       localStorage.setItem(LAYER_KEY, JSON.stringify(layersVisible));
       renderAll();
     };
+    document.getElementById('toggleLayerLogos').onchange = (e) => {
+      layersVisible.watermarks = e.target.checked;
+      localStorage.setItem(LAYER_KEY, JSON.stringify(layersVisible));
+      updateWatermarks();
+    };
 
     rows.forEach(row => {
       const wrap = document.createElement('div');
@@ -1190,6 +1331,7 @@
         ${row.editableColor
           ? `<input type="color" class="edit-only" value="${row.color}">`
           : `<span class="dot" style="background:${row.color};"></span>`}
+        <span class="mini-slot">${row.editableColor ? logoImg(row.key, 'mini-logo') : ''}</span>
         <span class="faction-name">${escapeHtml(row.label)}</span>`;
 
       wrap.querySelector('input[type=checkbox]').onchange = (e) => {

@@ -1,0 +1,53 @@
+Faction logo file names (replace any file with your own artwork, keeping the name).
+If you use PNG instead of SVG, set LOGO_EXT = "png" near the top of index.html.
+
+poldergeists.svg   <-  Poldergeists
+underlane-bank.svg   <-  Underlane Bank
+bronze-crows.svg   <-  Bronze Crows
+rippy-joes-slicers.svg   <-  Rippy Joe's Slicers
+the-cutpurse-crew.svg   <-  The Cutpurse Crew
+blackwater-sirens.svg   <-  Blackwater Sirens
+baron-sand.svg   <-  Baron Sand
+the-deadmans-doors.svg   <-  The Deadman's Doors
+the-dock-3-lads.svg   <-  The Dock 3 Lads
+the-mudbay-stags.svg   <-  The Mudbay Stags
+the-crystal-cutters.svg   <-  The Crystal Cutters
+the-maskers.svg   <-  The Maskers
+the-loopers.svg   <-  The Loopers
+backyard-briscoes.svg   <-  Backyard Briscoes
+westend-skinners.svg   <-  Westend Skinners
+the-gimlets.svg   <-  The Gimlets
+oxbow-holdings.svg   <-  Oxbow Holdings
+the-musicians-guild.svg   <-  The Musician's Guild
+noctal-song.svg   <-  Noctal Song
+the-scattered-league.svg   <-  The Scattered League
+the-glimmershade-syndicate.svg   <-  The Glimmershade Syndicate
+the-dusty-gals.svg   <-  The Dusty Gals
+red-pilgrims.svg   <-  Red Pilgrims
+velarian-army.svg   <-  Velarian Army
+the-guilds-mercantile.svg   <-  The Guilds Mercantile
+navy-of-the-republic.svg   <-  Navy of the Republic
+purple-lotus-guild.svg   <-  Purple Lotus Guild
+guild-of-st-gregor.svg   <-  Guild of St Gregor
+khalmara-guild.svg   <-  Khalmara Guild
+noble-college-of-bankers.svg   <-  Noble College of Bankers
+fort-izle-prison.svg   <-  Fort Izle Prison
+church-of-alastor.svg   <-  Church of Alastor
+broken-tower-guild.svg   <-  Broken Tower Guild
+culcainian-consulate.svg   <-  Culcainian Consulate
+library-of-velaria.svg   <-  Library of Velaria
+star-sea-trading-company.svg   <-  Star Sea Trading Company
+ostral-song.svg   <-  Ostral Song
+zantish-embassy.svg   <-  Zantish Embassy
+evenstorm-consulate.svg   <-  Evenstorm Consulate
+amarantan-embassy.svg   <-  Amarantan Embassy
+sailors.svg   <-  Sailors
+ferrymen.svg   <-  Ferrymen
+stonecutters.svg   <-  Stonecutters
+polderfolk.svg   <-  Polderfolk
+underwriters.svg   <-  Underwriters
+vintners.svg   <-  Vintners
+chandlers.svg   <-  Chandlers
+shipwrights.svg   <-  Shipwrights
+scriveners.svg   <-  Scriveners
+kirkmuir-mechanistic.svg   <-  Kirkmuir Mechanistic
