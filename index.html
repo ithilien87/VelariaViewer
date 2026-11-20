@@ -423,6 +423,22 @@
   .compass .zout { bottom: 0; left: 19px; }
   .compass .reset { top: 19px; left: 19px; }
 
+  /* ---------- Rotate controls (sit just above the zoom compass) ---------- */
+  .rotate-ctl {
+    position: absolute; bottom: 92px; left: 16px; z-index: 999;
+    display: flex; gap: 6px; align-items: center;
+  }
+  .rotate-ctl button {
+    background: var(--ink-panel); border: 1px solid var(--ink-line);
+    color: var(--brass); width: 26px; height: 26px; border-radius: 50%;
+    font-size: 15px; line-height: 1; cursor: pointer; padding: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rotate-ctl button:hover { background: var(--brass); color: var(--ink); }
+  .rotate-ctl .north { width: 32px; height: 32px; }
+  .rotate-ctl .north svg { width: 18px; height: 18px; transition: transform 0.12s linear; }
+
   .hint {
     position: absolute; bottom: 20px; left: 96px; z-index: 999;
     background: var(--ink-panel); border: 1px solid var(--ink-line);
@@ -496,6 +512,16 @@
   </div>
 </div>
 
+<div class="rotate-ctl">
+  <button id="rotLeft" title="Rotate left">↺</button>
+  <button id="rotNorth" class="north" title="Reset to north">
+    <svg id="northNeedle" viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M10 1 L14.5 11 L10 9 L5.5 11 Z" fill="#c9a54b" stroke="#14171f" stroke-width="0.8" stroke-linejoin="round"/>
+      <path d="M10 19 L14.5 11 L10 9 L5.5 11 Z" fill="#8a93a6" stroke="#14171f" stroke-width="0.8" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <button id="rotRight" title="Rotate right">↻</button>
+</div>
 <div class="compass">
   <button class="zin" title="Zoom in">+</button>
   <button class="reset" title="Reset view">◎</button>
@@ -510,6 +536,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- leaflet-rotate: adds map rotation (bearing) to Leaflet. Must load after Leaflet, before the map is created. -->
+<script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 <script>
 /* ================================================================
    1. MAP CONFIGURATION — edit these four values for your own map
@@ -612,6 +640,14 @@
     maxZoom: MAX_ZOOM,
     zoomControl: false,
     attributionControl: false,
+    // Rotation (leaflet-rotate). Two-finger twist on touch screens and
+    // Shift + scroll wheel on desktop; the on-screen buttons are added
+    // in section 9. The plugin's own control is off — we use ours.
+    rotate: true,
+    bearing: 0,
+    touchRotate: true,
+    shiftKeyRotate: true,
+    rotateControl: false,
   });
 
   // Compute the pixel bounds of the image at native resolution,
@@ -1243,7 +1279,21 @@
    ================================================================ */
   document.querySelector('.compass .zin').onclick = () => map.zoomIn();
   document.querySelector('.compass .zout').onclick = () => map.zoomOut();
-  document.querySelector('.compass .reset').onclick = () => map.fitBounds(bounds);
+  document.querySelector('.compass .reset').onclick = () => { map.setBearing(0); map.fitBounds(bounds); };
+
+  // Rotation buttons. The map's bearing is the compass heading shown at
+  // the top of the screen, so the needle turns the opposite way to keep
+  // pointing at the map's original "up". Rotation is a personal view
+  // setting only — it isn't saved in pins.json.
+  const ROTATE_STEP = 15; // degrees per button press
+  const northNeedle = document.getElementById('northNeedle');
+  function currentBearing() { return map.getBearing ? map.getBearing() : 0; }
+  document.getElementById('rotLeft').onclick  = () => map.setBearing(currentBearing() - ROTATE_STEP);
+  document.getElementById('rotRight').onclick = () => map.setBearing(currentBearing() + ROTATE_STEP);
+  document.getElementById('rotNorth').onclick = () => map.setBearing(0);
+  map.on('rotate', () => {
+    northNeedle.style.transform = `rotate(${-currentBearing()}deg)`;
+  });
 
 /* ================================================================
    10. INITIAL LOAD
