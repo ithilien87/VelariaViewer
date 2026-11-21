@@ -674,12 +674,14 @@
     maxZoom: MAX_ZOOM,
     zoomControl: false,
     attributionControl: false,
-    // Rotation (leaflet-rotate). Two-finger twist on touch screens and
-    // Shift + scroll wheel on desktop; the on-screen buttons are added
-    // in section 9. The plugin's own control is off — we use ours.
+    // Rotation (leaflet-rotate). Rotate with the on-screen buttons, or
+    // Shift + scroll wheel on desktop. Two-finger twist is deliberately
+    // OFF: on a phone, fingers twist slightly during every pinch-zoom, which
+    // spun the map by accident and also stopped territory shapes scaling
+    // until the fingers lifted. The plugin's own control is off — we use ours.
     rotate: true,
     bearing: 0,
-    touchRotate: true,
+    touchRotate: false,
     shiftKeyRotate: true,
     rotateControl: false,
   });
@@ -891,8 +893,10 @@
     return wmCache[t.id];
   }
 
+  let wmZoom = null; // zoom level the watermarks were last sized for
   function updateWatermarks() {
     watermarkLayer.clearLayers();
+    wmZoom = map.getZoom();
     if (!layersVisible.territories || !layersVisible.watermarks) return;
     const pxPerUnit = map.options.crs.scale(map.getZoom());
     territories.filter(territoryVisible).forEach(t => {
@@ -911,6 +915,17 @@
     });
   }
   map.on('zoomend', updateWatermarks);
+  // While a pinch-zoom is in progress, scale the existing watermarks along
+  // with the fingers (they're re-sized properly when the zoom settles), so
+  // they don't sit at the old size and then snap.
+  map.on('zoom', () => {
+    if (wmZoom === null) return;
+    const k = Math.pow(2, map.getZoom() - wmZoom);
+    watermarkLayer.eachLayer(m => {
+      const el = m.getElement && m.getElement();
+      if (el && el.firstChild) el.firstChild.style.transform = `scale(${k})`;
+    });
+  });
 
   function addMarker(pin) {
     const m = L.marker([pin.lat, pin.lng], { icon: pinIcon(pin.faction, pin.name) });
