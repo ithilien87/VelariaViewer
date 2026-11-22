@@ -234,6 +234,9 @@
     padding: 10px 8px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--brass);
   }
+  .faction-group-head { gap: 8px; }
+  .faction-group-head .group-check { accent-color: var(--brass); margin: 0 1px 0 0; flex-shrink: 0; }
+  .faction-group-head .group-title { flex: 1; }
   .faction-group-head .fav-reset {
     background: none; border: 1px solid var(--ink-line); color: var(--parchment-dim);
     font-size: 10px; padding: 2px 8px; border-radius: 10px; cursor: pointer; text-transform: none; letter-spacing: 0;
@@ -1531,11 +1534,23 @@
       factionListEl.appendChild(wrap);
     };
 
-    const heading = (text, extraHtml) => {
+    // groupRows (optional) adds a tickbox that shows / hides every faction in that group at once.
+    const heading = (text, extraHtml, groupRows) => {
       const h = document.createElement('div');
       h.className = 'faction-group-head';
-      h.innerHTML = `<span>${text}</span>${extraHtml || ''}`;
+      h.innerHTML = `${groupRows ? '<input type="checkbox" class="group-check" title="Show or hide this whole group">' : ''}<span class="group-title">${text}</span>${extraHtml || ''}`;
       factionListEl.appendChild(h);
+      if (groupRows) {
+        const cb = h.querySelector('.group-check');
+        const nShown = groupRows.filter(r => !hiddenFactions.has(r.key)).length;
+        cb.checked = nShown === groupRows.length;
+        cb.indeterminate = nShown > 0 && nShown < groupRows.length;
+        cb.onchange = () => {
+          groupRows.forEach(r => cb.checked ? hiddenFactions.delete(r.key) : hiddenFactions.add(r.key));
+          localStorage.setItem(FILTER_KEY, JSON.stringify([...hiddenFactions]));
+          renderAll();
+        };
+      }
       return h;
     };
     const favRows = rows.filter(r => r.editableColor && isFavourite(r.key)).sort(byName);
@@ -1543,7 +1558,7 @@
     if (favRows.length) {
       const dirty = !editMode && (favAdd.size || favRemove.size);
       const h = heading(editMode ? '★ Favourites — shown to everyone' : '★ Favourites',
-        dirty ? '<button class="fav-reset" title="Go back to the standard favourites">Reset</button>' : '');
+        dirty ? '<button class="fav-reset" title="Go back to the standard favourites">Reset</button>' : '', favRows);
       const rb = h.querySelector('.fav-reset'); if (rb) rb.onclick = resetFavourites;
       favRows.forEach(buildRow);
       heading('All factions');
@@ -1553,10 +1568,10 @@
     FACTION_GROUPS.forEach(([title, members]) => {
       const inGroup = members.map(m => otherRows.find(r => r.key === m)).filter(Boolean).sort(byName);
       members.forEach(m => grouped.add(m));
-      if (inGroup.length) { heading(title); inGroup.forEach(buildRow); }
+      if (inGroup.length) { heading(title, '', inGroup); inGroup.forEach(buildRow); }
     });
     const leftover = otherRows.filter(r => r.editableColor && !grouped.has(r.key)).sort(byName);
-    if (leftover.length) { heading('Other'); leftover.forEach(buildRow); }
+    if (leftover.length) { heading('Other', '', leftover); leftover.forEach(buildRow); }
     factionListEl.scrollTop = keepScroll;
 
     document.getElementById('showAllFactions').onclick = () => {
