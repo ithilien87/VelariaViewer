@@ -698,27 +698,27 @@
     "Underlane Bank": "#2a30d1",
     "Bronze Crows": "#393e6e",
     "Rippy Joe's Slicers": "#c76641",
-    "The Cutpurse Crew": "#be682c",
+    "Cutpurse Crew": "#be682c",
     "Blackwater Sirens": "#080b0d",
     "Baron Sand": "#d0a038",
-    "The Deadman's Doors": "#b59e34",
-    "The Dock 3 Lads": "#d0c938",
-    "The Mudbay Stags": "#bbc741",
-    "The Crystal Cutters": "#9cbe2c",
-    "The Maskers": "#96c741",
-    "The Loopers": "#84d038",
+    "Deadman's Doors": "#b59e34",
+    "Dock 3 Lads": "#d0c938",
+    "Mudbay Stags": "#bbc741",
+    "Crystal Cutters": "#9cbe2c",
+    "Maskers": "#96c741",
+    "Loopers": "#84d038",
     "Backyard Briscoes": "#42eff5",
     "Westend Skinners": "#f5ef42",
-    "The Gimlets": "#661755",
+    "Gimlets": "#661755",
     "Oxbow Holdings": "#b07c1c",
-    "The Musician's Guild": "#eaa5f0",
+    "Musician's Guild": "#eaa5f0",
     "Noctal Song": "#5bd038",
-    "The Scattered League": "#4dc741",
-    "The Glimmershade Syndicate": "#2cbe33",
-    "The Dusty Gals": "#ab06d4",
+    "Scattered League": "#4dc741",
+    "Glimmershade Syndicate": "#2cbe33",
+    "Dusty Gals": "#ab06d4",
     "Red Pilgrims": "#f70a3d",
     "Velarian Army": "#38d069",
-    "The Guilds Mercantile": "#34b56f",
+    "Guilds Mercantile": "#34b56f",
     "Navy of the Republic": "#38d092",
     "Purple Lotus Guild": "#9336ad",
     "Guild of St Gregor": "#2cbeaa",
@@ -848,23 +848,43 @@
   const FAV_KEY = "citymap.favs.v1"; // per-browser favourite tweaks: { add: [...], remove: [...] }
   // Factions pinned to the top of the Faction filter for everybody. pins.json can carry its own
   // "favourites" list, which wins over this one (this is only the fallback until you publish one).
-  const FAVOURITES_FALLBACK = ["Poldergeists", "Underlane Bank", "The Loopers", "Velarian Army",
-    "Oxbow Holdings", "The Dusty Gals", "The Musician's Guild", "Blackwater Sirens"];
+  const FAVOURITES_FALLBACK = ["Poldergeists", "Underlane Bank", "Loopers", "Velarian Army",
+    "Oxbow Holdings", "Dusty Gals", "Musician's Guild", "Blackwater Sirens"];
+  // Factions were renamed to drop a leading "The". Anything saved under an old name (pins.json, drafts,
+  // favourites, filter ticks) is translated on load, so older files keep working untouched.
+  const NAME_RENAMES = {
+    "The Cutpurse Crew": "Cutpurse Crew",
+    "The Deadman's Doors": "Deadman's Doors",
+    "The Dock 3 Lads": "Dock 3 Lads",
+    "The Mudbay Stags": "Mudbay Stags",
+    "The Crystal Cutters": "Crystal Cutters",
+    "The Maskers": "Maskers",
+    "The Loopers": "Loopers",
+    "The Gimlets": "Gimlets",
+    "The Musician's Guild": "Musician's Guild",
+    "The Scattered League": "Scattered League",
+    "The Glimmershade Syndicate": "Glimmershade Syndicate",
+    "The Dusty Gals": "Dusty Gals",
+    "The Guilds Mercantile": "Guilds Mercantile",
+  };
+  const renameFaction = (n) => (n && NAME_RENAMES[n]) || n;
+  const renameKeys = (obj) => Object.keys(obj || {}).reduce((o, k) => { o[renameFaction(k)] = obj[k]; return o; }, {});
+  const sortedFactionNames = () => Object.keys(FACTIONS_DEFAULT).sort((a, b) => a.replace(/^the\s+/i, '').localeCompare(b.replace(/^the\s+/i, ''), undefined, { sensitivity: 'base' }));
   let defaultFavs = FAVOURITES_FALLBACK.slice();
   // How the non-favourite factions are grouped in the Faction filter. Names must match FACTIONS_DEFAULT
   // exactly; anything not listed here (e.g. a faction you add later) lands in an "Other" group at the bottom.
   const FACTION_GROUPS = [
-    ["Underworld Factions", ["Poldergeists", "Underlane Bank", "The Loopers", "Blackwater Sirens", "The Dusty Gals",
-      "Bronze Crows", "Rippy Joe's Slicers", "Baron Sand", "The Deadman's Doors", "The Dock 3 Lads", "The Mudbay Stags",
-      "The Crystal Cutters", "The Maskers", "Backyard Briscoes", "Westend Skinners", "The Gimlets",
-      "The Glimmershade Syndicate", "The Cutpurse Crew"]],
-    ["Institutions", ["The Guilds Mercantile", "Navy of the Republic", "Purple Lotus Guild", "Guild of St Gregor",
+    ["Underworld Factions", ["Poldergeists", "Underlane Bank", "Loopers", "Blackwater Sirens", "Dusty Gals",
+      "Bronze Crows", "Rippy Joe's Slicers", "Baron Sand", "Deadman's Doors", "Dock 3 Lads", "Mudbay Stags",
+      "Crystal Cutters", "Maskers", "Backyard Briscoes", "Westend Skinners", "Gimlets",
+      "Glimmershade Syndicate", "Cutpurse Crew"]],
+    ["Institutions", ["Guilds Mercantile", "Navy of the Republic", "Purple Lotus Guild", "Guild of St Gregor",
       "Khalmara Guild", "Noble College of Bankers", "Fort Izle Prison", "Church of Alastor", "Culcainian Consulate",
       "Library of Velaria", "Star Sea Trading Company", "Ostral Song", "Zantish Embassy", "Amarantan Embassy",
-      "Velarian Army", "The Musician's Guild", "Noctal Song", "Evenstorm Consulate"]],
+      "Velarian Army", "Musician's Guild", "Noctal Song", "Evenstorm Consulate"]],
     ["Industries and companies", ["Sailors", "Ferrymen", "Stonecutters", "Polderfolk", "Underwriters", "Vintners",
       "Chandlers", "Shipwrights", "Scriveners", "Kirkmuir Mechanistic", "Oxbow Holdings"]],
-    ["Fringe Factions", ["Red Pilgrims", "The Scattered League", "Broken Tower Guild"]]
+    ["Fringe Factions", ["Red Pilgrims", "Scattered League", "Broken Tower Guild"]]
   ];
   let favAdd = new Set(), favRemove = new Set();
   let pins = [];
@@ -900,23 +920,26 @@
     if (draft && Array.isArray(draft.pins) && draft.pins.length >= published.pins.length) {
       pins = draft.pins;
       territories = draft.territories || published.territories;
-      factionColors = Object.assign({}, FACTIONS_DEFAULT, draft.factions || published.factions);
+      factionColors = Object.assign({}, FACTIONS_DEFAULT, renameKeys(draft.factions || published.factions));
       defaultFavs = Array.isArray(draft.favourites) ? draft.favourites : (published.favourites || FAVOURITES_FALLBACK.slice());
     } else {
       pins = published.pins;
       territories = published.territories;
-      factionColors = Object.assign({}, FACTIONS_DEFAULT, published.factions);
+      factionColors = Object.assign({}, FACTIONS_DEFAULT, renameKeys(published.factions));
       defaultFavs = published.favourites || FAVOURITES_FALLBACK.slice();
     }
+    pins.forEach(p => { if (p.faction) p.faction = renameFaction(p.faction); });
+    territories.forEach(t => { if (t.faction) t.faction = renameFaction(t.faction); });
+    defaultFavs = [...new Set(defaultFavs.map(renameFaction))];
     nextId = pins.reduce((m,p) => Math.max(m, p.id||0), 0) + 1;
     nextTerritoryId = territories.reduce((m,t) => Math.max(m, t.id||0), 0) + 1;
 
     try {
-      hiddenFactions = new Set(JSON.parse(localStorage.getItem(FILTER_KEY)) || []);
+      hiddenFactions = new Set((JSON.parse(localStorage.getItem(FILTER_KEY)) || []).map(renameFaction));
     } catch(e) { hiddenFactions = new Set(); }
     try {
       const f = JSON.parse(localStorage.getItem(FAV_KEY)) || {};
-      favAdd = new Set(f.add || []); favRemove = new Set(f.remove || []);
+      favAdd = new Set((f.add || []).map(renameFaction)); favRemove = new Set((f.remove || []).map(renameFaction));
     } catch(e) { favAdd = new Set(); favRemove = new Set(); }
   }
 
@@ -1164,7 +1187,7 @@
   function openPinModal(existingPin) {
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
-    const factionOptions = Object.keys(FACTIONS_DEFAULT).map(name =>
+    const factionOptions = sortedFactionNames().map(name =>
       `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
     backdrop.innerHTML = `
       <div class="modal">
@@ -1239,7 +1262,7 @@
   const drawStatus = document.getElementById('drawStatus');
   const finishPolygonBtn = document.getElementById('finishPolygonBtn');
 
-  drawFactionSelect.innerHTML = Object.keys(FACTIONS_DEFAULT).map(name =>
+  drawFactionSelect.innerHTML = sortedFactionNames().map(name =>
     `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
 
   drawToggle.onclick = () => {
@@ -1451,6 +1474,8 @@
     renderFactionPanel();
   }
 
+  const sortKey = (label) => label.replace(/^the\s+/i, '');
+  const byName = (a, b) => sortKey(a.label).localeCompare(sortKey(b.label), undefined, { sensitivity: 'base' });
   function renderFactionPanel() {
     const keepScroll = factionListEl.scrollTop;
     const names = Object.keys(FACTIONS_DEFAULT);
@@ -1513,7 +1538,7 @@
       factionListEl.appendChild(h);
       return h;
     };
-    const favRows = rows.filter(r => r.editableColor && isFavourite(r.key));
+    const favRows = rows.filter(r => r.editableColor && isFavourite(r.key)).sort(byName);
     const otherRows = rows.filter(r => !(r.editableColor && isFavourite(r.key)));
     if (favRows.length) {
       const dirty = !editMode && (favAdd.size || favRemove.size);
@@ -1526,11 +1551,11 @@
     otherRows.filter(r => !r.editableColor).forEach(buildRow); // "No faction"
     const grouped = new Set();
     FACTION_GROUPS.forEach(([title, members]) => {
-      const inGroup = members.map(m => otherRows.find(r => r.key === m)).filter(Boolean);
+      const inGroup = members.map(m => otherRows.find(r => r.key === m)).filter(Boolean).sort(byName);
       members.forEach(m => grouped.add(m));
       if (inGroup.length) { heading(title); inGroup.forEach(buildRow); }
     });
-    const leftover = otherRows.filter(r => r.editableColor && !grouped.has(r.key));
+    const leftover = otherRows.filter(r => r.editableColor && !grouped.has(r.key)).sort(byName);
     if (leftover.length) { heading('Other'); leftover.forEach(buildRow); }
     factionListEl.scrollTop = keepScroll;
 
@@ -1581,10 +1606,12 @@
         const data = Array.isArray(imported)
           ? { pins: imported, factions: {}, territories: [] }
           : { pins: imported.pins || [], factions: imported.factions || {}, territories: imported.territories || [] };
-        defaultFavs = Array.isArray(imported.favourites) ? imported.favourites : defaultFavs;
+        defaultFavs = Array.isArray(imported.favourites) ? [...new Set(imported.favourites.map(renameFaction))] : defaultFavs;
         pins = data.pins;
         territories = data.territories;
-        factionColors = Object.assign({}, FACTIONS_DEFAULT, data.factions);
+        pins.forEach(p => { if (p.faction) p.faction = renameFaction(p.faction); });
+        territories.forEach(t => { if (t.faction) t.faction = renameFaction(t.faction); });
+        factionColors = Object.assign({}, FACTIONS_DEFAULT, renameKeys(data.factions));
         nextId = pins.reduce((m,p) => Math.max(m, p.id||0), 0) + 1;
         nextTerritoryId = territories.reduce((m,t) => Math.max(m, t.id||0), 0) + 1;
         save();
