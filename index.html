@@ -460,8 +460,50 @@
   .rotate-ctl .north { width: 32px; height: 32px; }
   .rotate-ctl .north svg { width: 18px; height: 18px; transition: transform 0.12s linear; }
 
+
+  /* ---------- Layers shortcut (bottom-left, beside the zoom keys) ---------- */
+  .layers-ctl { position: absolute; bottom: 20px; left: 92px; z-index: 1000; }
+  .layers-btn {
+    width: 72px; height: 64px; border-radius: 14px; cursor: pointer;
+    background: var(--ink-panel); border: 2px solid var(--brass); color: var(--brass);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.45); padding: 0;
+  }
+  .layers-btn svg { width: 28px; height: 28px; }
+  .layers-btn:hover, .layers-btn[aria-expanded="true"] { background: var(--brass); color: var(--ink); }
+  .layers-panel {
+    position: absolute; bottom: 76px; left: 28px; width: 248px;
+    background: var(--ink-panel); border: 1px solid var(--ink-line); border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.5); padding: 8px;
+  }
+  .layers-panel[hidden] { display: none; }
+  .layers-panel h4 {
+    margin: 4px 8px 6px; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--parchment-dim);
+  }
+  .layer-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; min-height: 48px; padding: 6px 10px; border-radius: 8px; cursor: pointer;
+    background: none; border: 0; color: var(--parchment); font-family: 'Inter', sans-serif;
+    font-size: 15px; font-weight: 600; text-align: left;
+  }
+  .layer-row:hover { background: rgba(255,255,255,0.06); }
+  .layer-row.sub { padding-left: 26px; font-weight: 500; font-size: 14px; }
+  .layer-row.disabled { opacity: 0.4; pointer-events: none; }
+  .layer-switch {
+    flex: none; width: 40px; height: 22px; border-radius: 11px; position: relative;
+    background: var(--ink-line); transition: background 0.15s;
+  }
+  .layer-switch::after {
+    content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+    border-radius: 50%; background: var(--parchment-dim); transition: left 0.15s, background 0.15s;
+  }
+  .layer-row[aria-checked="true"] .layer-switch { background: var(--brass-dim); }
+  .layer-row[aria-checked="true"] .layer-switch::after { left: 21px; background: var(--brass); }
+
   .hint {
-    position: absolute; bottom: 20px; left: 96px; z-index: 999;
+    position: absolute; bottom: 20px; left: 176px; z-index: 999;
     background: var(--ink-panel); border: 1px solid var(--ink-line);
     color: var(--parchment-dim); font-size: 12px; padding: 8px 12px;
     border-radius: 7px; pointer-events: none; opacity: 0; transition: opacity 0.2s;
@@ -469,7 +511,7 @@
   .hint.show { opacity: 1; }
 
   .draw-controls {
-    position: absolute; bottom: 20px; left: 96px; z-index: 1001;
+    position: absolute; bottom: 20px; left: 176px; z-index: 1001;
     background: var(--ink-panel); border: 1px solid var(--ink-line);
     border-radius: 7px; padding: 8px 10px; display: none; align-items: center; gap: 8px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.35);
@@ -547,6 +589,18 @@
   <button class="zin" title="Zoom in">+</button>
   <button class="reset" title="Reset view">◎</button>
   <button class="zout" title="Zoom out">−</button>
+</div>
+<div class="layers-ctl" id="layersCtl">
+  <div id="layersPanel" class="layers-panel" hidden role="group" aria-label="Map layers">
+    <h4>Map layers</h4>
+    <button class="layer-row" data-layer="territories" role="switch" aria-checked="true"><span>Territories</span><span class="layer-switch"></span></button>
+    <button class="layer-row sub" data-layer="watermarks" role="switch" aria-checked="true"><span>Faction logos</span><span class="layer-switch"></span></button>
+    <button class="layer-row" data-layer="pins" role="switch" aria-checked="false"><span>Pins</span><span class="layer-switch"></span></button>
+  </div>
+  <button id="layersBtn" class="layers-btn" aria-expanded="false" aria-controls="layersPanel" title="Show or hide pins and territories">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3 2.5 8.5 12 14l9.5-5.5z"/><path d="m2.5 12.5 9.5 5.5 9.5-5.5"/><path d="m2.5 16 9.5 5.5L21.5 16"/></svg>
+    <span>Layers</span>
+  </button>
 </div>
 <div id="hint" class="hint">Click the map to place a pin</div>
 <div id="drawControls" class="draw-controls">
@@ -755,13 +809,14 @@
    ================================================================ */
   const DRAFT_KEY = "citymap.draft.v1";
   const FILTER_KEY = "citymap.filters.v1"; // per-browser faction visibility choices
-  const LAYER_KEY = "citymap.layers.v1"; // per-browser pins/territories layer toggle
+  // Layer visibility is deliberately NOT remembered between visits: every load starts with
+  // pins off and territories on, so the map opens uncluttered for everyone.
   let pins = [];
   let territories = [];
   let nextId = 1;
   let nextTerritoryId = 1;
   let hiddenFactions = new Set(); // faction names (or '__none__') currently hidden from the map
-  let layersVisible = { pins: true, territories: true, watermarks: true }; // master show/hide per layer type
+  let layersVisible = { pins: false, territories: true, watermarks: true }; // master show/hide per layer type
   // territoryLayer is added first so it sits BELOW markerLayer (Leaflet
   // layers stack in the order they're added to the map).
   const territoryLayer = L.layerGroup().addTo(map);
@@ -801,9 +856,6 @@
     try {
       hiddenFactions = new Set(JSON.parse(localStorage.getItem(FILTER_KEY)) || []);
     } catch(e) { hiddenFactions = new Set(); }
-    try {
-      layersVisible = Object.assign({ pins: true, territories: true, watermarks: true }, JSON.parse(localStorage.getItem(LAYER_KEY)) || {});
-    } catch(e) { layersVisible = { pins: true, territories: true, watermarks: true }; }
   }
 
   function save() {
@@ -1031,7 +1083,7 @@
   addToggle.onclick = () => {
     if (!editMode) return;
     addMode = !addMode;
-    if (addMode) cancelDrawing();
+    if (addMode) { cancelDrawing(); if (!layersVisible.pins) setLayer('pins', true); }
     addToggle.classList.toggle('active', addMode);
     hint.classList.toggle('show', addMode);
     map.getContainer().style.cursor = addMode ? 'crosshair' : '';
@@ -1136,6 +1188,7 @@
       hint.classList.remove('show');
     }
     drawMode = true;
+    if (!layersVisible.territories) setLayer('territories', true);
     drawPoints = [];
     drawToggle.classList.add('active');
     drawPanel.style.display = 'block';
@@ -1237,7 +1290,7 @@
     pinListEl.innerHTML = '';
     if (!list.length) {
       const emptyMsg = visiblePins.length ? 'No pins match your search.' :
-        (pins.length ? 'All pins are hidden — check the Factions tab.' :
+        (pins.length ? (layersVisible.pins ? 'All pins are hidden — check the Factions tab.' : 'Pins are switched off to keep the map uncluttered. Turn them on with the <b>Layers</b> button (bottom left) or the Pins tickbox in the Factions tab.') :
         (editMode ? 'No pins yet. Click "Drop Pin", then click anywhere on the map.' : 'No pins published yet.'));
       pinListEl.innerHTML = `<div class="empty-note">${emptyMsg}</div>`;
       return;
@@ -1261,6 +1314,7 @@
   }
 
   function flyToPin(pin) {
+    if (!layersVisible.pins) setLayer('pins', true); // listing a pin means the user wants to see it
     map.flyTo([pin.lat, pin.lng], Math.max(map.getZoom(), MAX_NATIVE_ZOOM - 1));
     setTimeout(() => markers[pin.id] && markers[pin.id].openPopup(), 400);
   }
@@ -1322,21 +1376,9 @@
         <button id="hideAllFactions">Hide all</button>
       </div>`;
 
-    document.getElementById('toggleLayerPins').onchange = (e) => {
-      layersVisible.pins = e.target.checked;
-      localStorage.setItem(LAYER_KEY, JSON.stringify(layersVisible));
-      renderAll();
-    };
-    document.getElementById('toggleLayerTerritories').onchange = (e) => {
-      layersVisible.territories = e.target.checked;
-      localStorage.setItem(LAYER_KEY, JSON.stringify(layersVisible));
-      renderAll();
-    };
-    document.getElementById('toggleLayerLogos').onchange = (e) => {
-      layersVisible.watermarks = e.target.checked;
-      localStorage.setItem(LAYER_KEY, JSON.stringify(layersVisible));
-      updateWatermarks();
-    };
+    document.getElementById('toggleLayerPins').onchange = (e) => setLayer('pins', e.target.checked);
+    document.getElementById('toggleLayerTerritories').onchange = (e) => setLayer('territories', e.target.checked);
+    document.getElementById('toggleLayerLogos').onchange = (e) => setLayer('watermarks', e.target.checked);
 
     rows.forEach(row => {
       const wrap = document.createElement('div');
@@ -1430,6 +1472,40 @@
     e.target.value = '';
   };
   document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+
+/* ================================================================
+   8b. LAYERS SHORTCUT (bottom-left) — mirrors the sidebar toggles
+   ================================================================ */
+  const layersBtn = document.getElementById('layersBtn');
+  const layersPanel = document.getElementById('layersPanel');
+
+  function syncLayerControls() {
+    layersPanel.querySelectorAll('.layer-row').forEach(row => {
+      const on = !!layersVisible[row.dataset.layer];
+      row.setAttribute('aria-checked', on);
+      if (row.dataset.layer === 'watermarks') row.classList.toggle('disabled', !layersVisible.territories);
+    });
+    const sbIds = { pins: 'toggleLayerPins', territories: 'toggleLayerTerritories', watermarks: 'toggleLayerLogos' };
+    Object.keys(sbIds).forEach(k => { const el = document.getElementById(sbIds[k]); if (el) el.checked = !!layersVisible[k]; });
+  }
+  function setLayer(name, on) {
+    layersVisible[name] = on;
+    syncLayerControls();
+    if (name === 'watermarks') updateWatermarks(); else renderAll();
+  }
+  layersPanel.querySelectorAll('.layer-row').forEach(row => {
+    row.onclick = () => setLayer(row.dataset.layer, !layersVisible[row.dataset.layer]);
+  });
+  function toggleLayersPanel(open) {
+    layersPanel.hidden = !open;
+    layersBtn.setAttribute('aria-expanded', open);
+  }
+  layersBtn.onclick = (e) => { e.stopPropagation(); toggleLayersPanel(layersPanel.hidden); };
+  document.addEventListener('click', (e) => { if (!layersPanel.hidden && !document.getElementById('layersCtl').contains(e.target)) toggleLayersPanel(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleLayersPanel(false); });
+  L.DomEvent.disableClickPropagation(document.getElementById('layersCtl'));
+  L.DomEvent.disableScrollPropagation(document.getElementById('layersCtl'));
+  syncLayerControls();
 
 /* ================================================================
    9. COMPASS CONTROL
