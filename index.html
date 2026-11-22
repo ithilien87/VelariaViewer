@@ -160,6 +160,10 @@
   .edit-only { display: none !important; }
   body.edit-mode .edit-only { display: initial !important; }
   body.edit-mode .sidebar-footer.edit-only { display: flex !important; }
+  body.edit-mode .sidebar-tabs.edit-only { display: flex !important; }
+  /* the shape-drawing panel only shows while a shape is actually being drawn */
+  body.edit-mode .draw-panel.edit-only { display: none !important; }
+  body.edit-mode .draw-panel.edit-only.open { display: block !important; }
   .readonly-note { padding: 14px 16px; font-size: 12px; color: var(--parchment-dim); line-height: 1.5; }
   body.edit-mode .readonly-note { display: none !important; }
 
@@ -177,7 +181,7 @@
     box-shadow: 0 6px 20px rgba(0,0,0,0.35);
     transition: transform 0.2s ease;
   }
-  .sidebar.collapsed { transform: translateX(310px); }
+  .sidebar.collapsed { transform: translateX(calc(100% + 16px)); } /* slides off, leaving the labelled tab showing */
   .sidebar-header {
     padding: 14px 16px;
     border-bottom: 1px solid var(--ink-line);
@@ -280,11 +284,14 @@
     font-size: 12.5px; font-weight: 600; color: var(--parchment); cursor: pointer;
   }
   .layer-toggles input[type=checkbox] { accent-color: var(--brass); }
+  .sidebar-sub { font-size: 11px; color: var(--parchment-dim); margin-top: 3px; line-height: 1.3; }
   .sidebar-toggle {
     position: absolute;
-    top: 50%; left: -34px;
+    top: 50%; left: -38px;
     transform: translateY(-50%);
-    width: 34px; height: 44px;
+    width: 38px; height: 148px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    padding: 0;
     background: var(--ink-panel);
     border: 1px solid var(--ink-line);
     border-right: none;
@@ -294,6 +301,12 @@
     font-size: 14px;
     box-shadow: -4px 6px 14px rgba(0,0,0,0.3);
   }
+  .sidebar-toggle .st-arrow { font-size: 18px; line-height: 1; }
+  .sidebar-toggle .st-label {
+    writing-mode: vertical-rl; font-family: 'Inter', sans-serif; font-size: 12px;
+    font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .sidebar-toggle:hover { background: var(--brass); color: var(--ink); }
   .pin-list { flex: 1; overflow-y: auto; padding: 8px; }
   .pin-row {
     display: flex;
@@ -554,20 +567,24 @@
 </div>
 
 <div id="sidebar" class="sidebar">
-  <button id="sidebarToggle" class="sidebar-toggle">›</button>
+  <button id="sidebarToggle" class="sidebar-toggle" title="Show or hide the faction filter" aria-label="Faction filter">
+    <span class="st-arrow">›</span><span class="st-label">Faction filter</span>
+  </button>
   <div class="sidebar-header">
-    <h2 id="sidebarTitle">Velaria</h2>
-    <span id="pinCount" style="font-size:11px;color:var(--parchment-dim);"></span>
+    <div>
+      <h2 id="sidebarTitle">Faction filter</h2>
+      <div class="sidebar-sub">Tick the factions to show on the map · <span id="pinCount"></span></div>
+    </div>
   </div>
-  <div class="sidebar-tabs">
-    <button class="tab-btn active" data-tab="pins">Pins</button>
+  <!-- Pins / Territory lists are owner tools: they only appear once editing is unlocked. -->
+  <div class="sidebar-tabs edit-only">
+    <button class="tab-btn active" data-tab="factions">Factions</button>
+    <button class="tab-btn" data-tab="pins">Pins</button>
     <button class="tab-btn" data-tab="territory">Territory</button>
-    <button class="tab-btn" data-tab="factions">Factions</button>
   </div>
-  <div id="pinList" class="pin-list tab-panel active"></div>
+  <div id="factionList" class="pin-list tab-panel active"></div>
+  <div id="pinList" class="pin-list tab-panel"></div>
   <div id="territoryPanel" class="pin-list tab-panel"></div>
-  <div id="factionList" class="pin-list tab-panel"></div>
-  <div class="readonly-note">Viewing the published map. Only the map owner can add or move pins.</div>
   <div class="sidebar-footer edit-only">
     <button id="publishBtn">Publish pins.json</button>
     <button id="importBtn">Load file</button>
@@ -1056,6 +1073,7 @@
       hint.classList.remove('show');
       cancelDrawing();
       map.getContainer().style.cursor = '';
+      document.querySelector('.tab-btn[data-tab="factions"]').click();
       return;
     }
     const attempt = prompt('Editing passphrase:');
@@ -1191,7 +1209,7 @@
     if (!layersVisible.territories) setLayer('territories', true);
     drawPoints = [];
     drawToggle.classList.add('active');
-    drawPanel.style.display = 'block';
+    drawPanel.style.display = 'block'; drawPanel.classList.add('open');
     map.doubleClickZoom.disable();
     map.getContainer().style.cursor = 'crosshair';
     updateDrawPreview();
@@ -1243,7 +1261,7 @@
     drawPoints = [];
     if (drawPreview) { map.removeLayer(drawPreview); drawPreview = null; }
     drawToggle.classList.remove('active');
-    drawPanel.style.display = 'none';
+    drawPanel.style.display = 'none'; drawPanel.classList.remove('open');
     map.doubleClickZoom.enable();
     map.getContainer().style.cursor = '';
   }
@@ -1286,11 +1304,10 @@
     const list = filter
       ? visiblePins.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
       : visiblePins;
-    pinCountEl.textContent = visiblePins.length ? `${visiblePins.length} shown` : '';
     pinListEl.innerHTML = '';
     if (!list.length) {
       const emptyMsg = visiblePins.length ? 'No pins match your search.' :
-        (pins.length ? (layersVisible.pins ? 'All pins are hidden — check the Factions tab.' : 'Pins are switched off to keep the map uncluttered. Turn them on with the <b>Layers</b> button (bottom left) or the Pins tickbox in the Factions tab.') :
+        (pins.length ? (layersVisible.pins ? 'All pins are hidden — check the Factions tab.' : 'Pins are switched off to keep the map uncluttered. Turn them on with the <b>Layers</b> button (bottom left).') :
         (editMode ? 'No pins yet. Click "Drop Pin", then click anywhere on the map.' : 'No pins published yet.'));
       pinListEl.innerHTML = `<div class="empty-note">${emptyMsg}</div>`;
       return;
@@ -1366,19 +1383,13 @@
       .concat(names.map(n => ({ key: n, label: n, color: factionColors[n], editableColor: true })));
 
     factionListEl.innerHTML = `
-      <div class="layer-toggles">
-        <label><input type="checkbox" id="toggleLayerPins" ${layersVisible.pins ? 'checked' : ''}> Pins</label>
-        <label><input type="checkbox" id="toggleLayerTerritories" ${layersVisible.territories ? 'checked' : ''}> Territories</label>
-        <label><input type="checkbox" id="toggleLayerLogos" ${layersVisible.watermarks ? 'checked' : ''}> Territory logos</label>
-      </div>
       <div class="faction-filter-actions">
         <button id="showAllFactions">Show all</button>
         <button id="hideAllFactions">Hide all</button>
       </div>`;
 
-    document.getElementById('toggleLayerPins').onchange = (e) => setLayer('pins', e.target.checked);
-    document.getElementById('toggleLayerTerritories').onchange = (e) => setLayer('territories', e.target.checked);
-    document.getElementById('toggleLayerLogos').onchange = (e) => setLayer('watermarks', e.target.checked);
+    const shown = rows.filter(r => !hiddenFactions.has(r.key)).length;
+    pinCountEl.textContent = `${shown} of ${rows.length} shown`;
 
     rows.forEach(row => {
       const wrap = document.createElement('div');
@@ -1435,8 +1446,13 @@
   const sidebar = document.getElementById('sidebar');
   document.getElementById('sidebarToggle').onclick = () => {
     sidebar.classList.toggle('collapsed');
-    document.getElementById('sidebarToggle').textContent = sidebar.classList.contains('collapsed') ? '‹' : '›';
+    syncSidebarArrow();
   };
+  function syncSidebarArrow() {
+    document.querySelector('#sidebarToggle .st-arrow').textContent = sidebar.classList.contains('collapsed') ? '‹' : '›';
+  }
+  // On phones the panel would cover most of the map, so start with it tucked away.
+  if (window.innerWidth < 700) { sidebar.classList.add('collapsed'); syncSidebarArrow(); }
 
   // Downloads the current pins, faction colours, and territory shapes
   // as pins.json. Replace the file of the same name on your host
@@ -1485,8 +1501,6 @@
       row.setAttribute('aria-checked', on);
       if (row.dataset.layer === 'watermarks') row.classList.toggle('disabled', !layersVisible.territories);
     });
-    const sbIds = { pins: 'toggleLayerPins', territories: 'toggleLayerTerritories', watermarks: 'toggleLayerLogos' };
-    Object.keys(sbIds).forEach(k => { const el = document.getElementById(sbIds[k]); if (el) el.checked = !!layersVisible[k]; });
   }
   function setLayer(name, on) {
     layersVisible[name] = on;
