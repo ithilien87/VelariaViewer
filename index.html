@@ -229,6 +229,23 @@
   }
   .faction-filter-actions button:hover { border-color: var(--brass); color: var(--brass); }
 
+  .faction-group-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 8px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--brass);
+  }
+  .faction-group-head .fav-reset {
+    background: none; border: 1px solid var(--ink-line); color: var(--parchment-dim);
+    font-size: 10px; padding: 2px 8px; border-radius: 10px; cursor: pointer; text-transform: none; letter-spacing: 0;
+  }
+  .faction-group-head .fav-reset:hover { border-color: var(--brass); color: var(--brass); }
+  .fav-btn {
+    background: none; border: 0; cursor: pointer; font-size: 18px; line-height: 1;
+    color: var(--parchment-dim); padding: 4px 6px; margin: -4px -4px -4px 0; border-radius: 6px; flex-shrink: 0;
+  }
+  .fav-btn:hover { color: var(--brass); background: rgba(201,165,75,0.1); }
+  .fav-btn.on { color: var(--brass); }
+
   /* ---------- Territory drawing panel ---------- */
   .draw-panel {
     position: absolute;
@@ -828,6 +845,28 @@
   const FILTER_KEY = "citymap.filters.v1"; // per-browser faction visibility choices
   // Layer visibility is deliberately NOT remembered between visits: every load starts with
   // pins off and territories on, so the map opens uncluttered for everyone.
+  const FAV_KEY = "citymap.favs.v1"; // per-browser favourite tweaks: { add: [...], remove: [...] }
+  // Factions pinned to the top of the Faction filter for everybody. pins.json can carry its own
+  // "favourites" list, which wins over this one (this is only the fallback until you publish one).
+  const FAVOURITES_FALLBACK = ["Poldergeists", "Underlane Bank", "The Loopers", "Velarian Army",
+    "Oxbow Holdings", "The Dusty Gals", "The Musician's Guild", "Blackwater Sirens"];
+  let defaultFavs = FAVOURITES_FALLBACK.slice();
+  // How the non-favourite factions are grouped in the Faction filter. Names must match FACTIONS_DEFAULT
+  // exactly; anything not listed here (e.g. a faction you add later) lands in an "Other" group at the bottom.
+  const FACTION_GROUPS = [
+    ["Underworld Factions", ["Poldergeists", "Underlane Bank", "The Loopers", "Blackwater Sirens", "The Dusty Gals",
+      "Bronze Crows", "Rippy Joe's Slicers", "Baron Sand", "The Deadman's Doors", "The Dock 3 Lads", "The Mudbay Stags",
+      "The Crystal Cutters", "The Maskers", "Backyard Briscoes", "Westend Skinners", "The Gimlets",
+      "The Glimmershade Syndicate", "The Cutpurse Crew"]],
+    ["Institutions", ["The Guilds Mercantile", "Navy of the Republic", "Purple Lotus Guild", "Guild of St Gregor",
+      "Khalmara Guild", "Noble College of Bankers", "Fort Izle Prison", "Church of Alastor", "Culcainian Consulate",
+      "Library of Velaria", "Star Sea Trading Company", "Ostral Song", "Zantish Embassy", "Amarantan Embassy",
+      "Velarian Army", "The Musician's Guild", "Noctal Song", "Evenstorm Consulate"]],
+    ["Industries and companies", ["Sailors", "Ferrymen", "Stonecutters", "Polderfolk", "Underwriters", "Vintners",
+      "Chandlers", "Shipwrights", "Scriveners", "Kirkmuir Mechanistic", "Oxbow Holdings"]],
+    ["Fringe Factions", ["Red Pilgrims", "The Scattered League", "Broken Tower Guild"]]
+  ];
+  let favAdd = new Set(), favRemove = new Set();
   let pins = [];
   let territories = [];
   let nextId = 1;
@@ -853,7 +892,7 @@
       // { pins, factions, territories } format, so an older pins.json still loads.
       published = Array.isArray(data)
         ? { pins: data, factions: {}, territories: [] }
-        : { pins: data.pins || [], factions: data.factions || {}, territories: data.territories || [] };
+        : { pins: data.pins || [], factions: data.factions || {}, territories: data.territories || [], favourites: Array.isArray(data.favourites) ? data.favourites : null };
     } catch (e) {
       console.warn('Could not fetch pins.json (this is expected if opening the file directly rather than through a local/web server).');
     }
@@ -862,10 +901,12 @@
       pins = draft.pins;
       territories = draft.territories || published.territories;
       factionColors = Object.assign({}, FACTIONS_DEFAULT, draft.factions || published.factions);
+      defaultFavs = Array.isArray(draft.favourites) ? draft.favourites : (published.favourites || FAVOURITES_FALLBACK.slice());
     } else {
       pins = published.pins;
       territories = published.territories;
       factionColors = Object.assign({}, FACTIONS_DEFAULT, published.factions);
+      defaultFavs = published.favourites || FAVOURITES_FALLBACK.slice();
     }
     nextId = pins.reduce((m,p) => Math.max(m, p.id||0), 0) + 1;
     nextTerritoryId = territories.reduce((m,t) => Math.max(m, t.id||0), 0) + 1;
@@ -873,11 +914,15 @@
     try {
       hiddenFactions = new Set(JSON.parse(localStorage.getItem(FILTER_KEY)) || []);
     } catch(e) { hiddenFactions = new Set(); }
+    try {
+      const f = JSON.parse(localStorage.getItem(FAV_KEY)) || {};
+      favAdd = new Set(f.add || []); favRemove = new Set(f.remove || []);
+    } catch(e) { favAdd = new Set(); favRemove = new Set(); }
   }
 
   function save() {
     // Draft-only save; does NOT touch the published pins.json.
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ pins, factions: factionColors, territories }));
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ pins, factions: factionColors, territories, favourites: defaultFavs }));
   }
 
   function factionVisible(faction) {
@@ -1074,6 +1119,7 @@
       cancelDrawing();
       map.getContainer().style.cursor = '';
       document.querySelector('.tab-btn[data-tab="factions"]').click();
+      renderFactionPanel();
       return;
     }
     const attempt = prompt('Editing passphrase:');
@@ -1377,7 +1423,36 @@
 
   const factionListEl = document.getElementById('factionList');
 
+  // Favourites = the published list, plus anything this player starred, minus anything they un-starred.
+  // While editing, the star changes the published list itself (the one everybody gets after you Publish).
+  function isFavourite(key) {
+    if (editMode) return defaultFavs.includes(key);
+    return (defaultFavs.includes(key) || favAdd.has(key)) && !favRemove.has(key);
+  }
+  function toggleFavourite(key) {
+    if (editMode) {
+      defaultFavs = isFavourite(key) ? defaultFavs.filter(k => k !== key) : defaultFavs.concat(key);
+      save();
+    } else if (isFavourite(key)) {
+      favAdd.delete(key);
+      if (defaultFavs.includes(key)) favRemove.add(key);
+    } else {
+      favRemove.delete(key);
+      if (!defaultFavs.includes(key)) favAdd.add(key);
+    }
+    if (!editMode) {
+      try { localStorage.setItem(FAV_KEY, JSON.stringify({ add: [...favAdd], remove: [...favRemove] })); } catch(e) {}
+    }
+    renderFactionPanel();
+  }
+  function resetFavourites() {
+    favAdd.clear(); favRemove.clear();
+    try { localStorage.removeItem(FAV_KEY); } catch(e) {}
+    renderFactionPanel();
+  }
+
   function renderFactionPanel() {
+    const keepScroll = factionListEl.scrollTop;
     const names = Object.keys(FACTIONS_DEFAULT);
     const rows = [{ key: '__none__', label: 'No faction', color: NO_FACTION_COLOR, editableColor: false }]
       .concat(names.map(n => ({ key: n, label: n, color: factionColors[n], editableColor: true })));
@@ -1391,7 +1466,7 @@
     const shown = rows.filter(r => !hiddenFactions.has(r.key)).length;
     pinCountEl.textContent = `${shown} of ${rows.length} shown`;
 
-    rows.forEach(row => {
+    const buildRow = (row) => {
       const wrap = document.createElement('div');
       wrap.className = 'faction-row';
       wrap.innerHTML = `
@@ -1400,7 +1475,8 @@
           ? `<input type="color" class="edit-only" value="${row.color}">`
           : `<span class="dot" style="background:${row.color};"></span>`}
         <span class="mini-slot">${row.editableColor ? logoImg(row.key, 'mini-logo') : ''}</span>
-        <span class="faction-name">${escapeHtml(row.label)}</span>`;
+        <span class="faction-name">${escapeHtml(row.label)}</span>
+        ${row.editableColor ? `<button class="fav-btn ${isFavourite(row.key) ? 'on' : ''}" aria-pressed="${isFavourite(row.key)}" title="${isFavourite(row.key) ? 'Remove from favourites' : 'Add to favourites'}">${isFavourite(row.key) ? '★' : '☆'}</button>` : ''}`;
 
       wrap.querySelector('input[type=checkbox]').onchange = (e) => {
         if (e.target.checked) hiddenFactions.delete(row.key);
@@ -1425,8 +1501,38 @@
           // live colour via the native picker.
         };
       }
+      const favBtn = wrap.querySelector('.fav-btn');
+      if (favBtn) favBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); toggleFavourite(row.key); };
       factionListEl.appendChild(wrap);
+    };
+
+    const heading = (text, extraHtml) => {
+      const h = document.createElement('div');
+      h.className = 'faction-group-head';
+      h.innerHTML = `<span>${text}</span>${extraHtml || ''}`;
+      factionListEl.appendChild(h);
+      return h;
+    };
+    const favRows = rows.filter(r => r.editableColor && isFavourite(r.key));
+    const otherRows = rows.filter(r => !(r.editableColor && isFavourite(r.key)));
+    if (favRows.length) {
+      const dirty = !editMode && (favAdd.size || favRemove.size);
+      const h = heading(editMode ? '★ Favourites — shown to everyone' : '★ Favourites',
+        dirty ? '<button class="fav-reset" title="Go back to the standard favourites">Reset</button>' : '');
+      const rb = h.querySelector('.fav-reset'); if (rb) rb.onclick = resetFavourites;
+      favRows.forEach(buildRow);
+      heading('All factions');
+    }
+    otherRows.filter(r => !r.editableColor).forEach(buildRow); // "No faction"
+    const grouped = new Set();
+    FACTION_GROUPS.forEach(([title, members]) => {
+      const inGroup = members.map(m => otherRows.find(r => r.key === m)).filter(Boolean);
+      members.forEach(m => grouped.add(m));
+      if (inGroup.length) { heading(title); inGroup.forEach(buildRow); }
     });
+    const leftover = otherRows.filter(r => r.editableColor && !grouped.has(r.key));
+    if (leftover.length) { heading('Other'); leftover.forEach(buildRow); }
+    factionListEl.scrollTop = keepScroll;
 
     document.getElementById('showAllFactions').onclick = () => {
       hiddenFactions.clear();
@@ -1459,7 +1565,7 @@
   // (GitHub repo / Netlify folder) to make these visible to everyone
   // else who opens the map.
   document.getElementById('publishBtn').onclick = () => {
-    const blob = new Blob([JSON.stringify({ pins, factions: factionColors, territories }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ pins, factions: factionColors, territories, favourites: defaultFavs }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'pins.json';
@@ -1475,6 +1581,7 @@
         const data = Array.isArray(imported)
           ? { pins: imported, factions: {}, territories: [] }
           : { pins: imported.pins || [], factions: imported.factions || {}, territories: imported.territories || [] };
+        defaultFavs = Array.isArray(imported.favourites) ? imported.favourites : defaultFavs;
         pins = data.pins;
         territories = data.territories;
         factionColors = Object.assign({}, FACTIONS_DEFAULT, data.factions);
