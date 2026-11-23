@@ -4,7 +4,7 @@
       "id": 4,
       "name": "Loopers Prison",
       "notes": "The main prison facility of the Loopers faction. Partly damaged from a recent attack.",
-      "faction": "The Loopers",
+      "faction": "Loopers",
       "lat": -92.65625,
       "lng": 74.763754774702
     },
@@ -28,7 +28,7 @@
       "id": 7,
       "name": "Dreamy's Fish Shop",
       "notes": "The base of Dusty Gals' faction leader, Dreamy.",
-      "faction": "The Dusty Gals",
+      "faction": "Dusty Gals",
       "lat": -104.1875,
       "lng": 91.27730208558626
     },
@@ -36,7 +36,7 @@
       "id": 8,
       "name": "Arkwright Dicerooms",
       "notes": "A Dock 3 Lads establishment for gaming.",
-      "faction": "The Dock 3 Lads",
+      "faction": "Dock 3 Lads",
       "lat": -101.1484375,
       "lng": 79.55347322647862
     },
@@ -116,7 +116,7 @@
       "id": 18,
       "name": "The Musician's Guildhall",
       "notes": "",
-      "faction": "The Musician's Guild",
+      "faction": "Musician's Guild",
       "lat": -62.39453125,
       "lng": 139.14555665132522
     },
@@ -140,7 +140,7 @@
       "id": 21,
       "name": "Traveller's Rest Inn",
       "notes": "Beau's workplace",
-      "faction": "The Musician's Guild",
+      "faction": "Musician's Guild",
       "lat": -73,
       "lng": 141.34041532422395
     },
@@ -204,7 +204,7 @@
       "id": 29,
       "name": "The Lodge",
       "notes": "Residence of the Judge",
-      "faction": "The Loopers",
+      "faction": "Loopers",
       "lat": -90.3125,
       "lng": 78.01405986855158
     },
@@ -212,7 +212,7 @@
       "id": 30,
       "name": "North Gallows Outpost",
       "notes": "Watch post",
-      "faction": "The Loopers",
+      "faction": "Loopers",
       "lat": -101.71875,
       "lng": 61.15784564083338
     },
@@ -236,7 +236,7 @@
       "id": 34,
       "name": "Eastling Arms",
       "notes": "Pub recommended to be avoided due to conflict between Mudbay Stags and Slicers",
-      "faction": "The Mudbay Stags",
+      "faction": "Mudbay Stags",
       "lat": -106.65625,
       "lng": 171.6717956755991
     },
@@ -252,7 +252,7 @@
       "id": 36,
       "name": "Ragrich Estate",
       "notes": "The estate of grain baron Abel Ragrich and family",
-      "faction": "The Loopers",
+      "faction": "Loopers",
       "lat": -48.46875,
       "lng": 141.11681128107688
     },
@@ -260,7 +260,7 @@
       "id": 37,
       "name": "The Brig",
       "notes": "An underground fighting arena run by the Dock 3 Lads. Fights every night!",
-      "faction": "The Dock 3 Lads",
+      "faction": "Dock 3 Lads",
       "lat": -109.296875,
       "lng": 50.53749279214384
     },
@@ -268,7 +268,7 @@
       "id": 38,
       "name": "The New Dock Skew",
       "notes": "A tavern notorious as a meeting point for the underworld in the southern Hangman.",
-      "faction": "The Gimlets",
+      "faction": "Gimlets",
       "lat": -116.25,
       "lng": 46.91945255483422
     }
@@ -278,27 +278,27 @@
     "Underlane Bank": "#b53434",
     "Bronze Crows": "#d04d38",
     "Rippy Joe's Slicers": "#c76641",
-    "The Cutpurse Crew": "#be682c",
+    "Cutpurse Crew": "#be682c",
     "Blackwater Sirens": "#c78a41",
     "Baron Sand": "#d0a038",
-    "The Deadman's Doors": "#b59e34",
-    "The Dock 3 Lads": "#d0c938",
-    "The Mudbay Stags": "#bbc741",
-    "The Crystal Cutters": "#9cbe2c",
-    "The Maskers": "#96c741",
-    "The Loopers": "#84d038",
+    "Deadman's Doors": "#b59e34",
+    "Dock 3 Lads": "#d0c938",
+    "Mudbay Stags": "#bbc741",
+    "Crystal Cutters": "#9cbe2c",
+    "Maskers": "#96c741",
+    "Loopers": "#84d038",
     "Backyard Briscoes": "#42eff5",
     "Westend Skinners": "#f5ef42",
-    "The Gimlets": "#661755",
+    "Gimlets": "#661755",
     "Oxbow Holdings": "#b07c1c",
-    "The Musician's Guild": "#63b534",
+    "Musician's Guild": "#63b534",
     "Noctal Song": "#5bd038",
-    "The Scattered League": "#4dc741",
-    "The Glimmershade Syndicate": "#2cbe33",
-    "The Dusty Gals": "#41c759",
+    "Scattered League": "#4dc741",
+    "Glimmershade Syndicate": "#2cbe33",
+    "Dusty Gals": "#41c759",
     "Red Pilgrims": "#f70a3d",
     "Velarian Army": "#38d069",
-    "The Guilds Mercantile": "#34b56f",
+    "Guilds Mercantile": "#34b56f",
     "Navy of the Republic": "#38d092",
     "Purple Lotus Guild": "#41c7a3",
     "Guild of St Gregor": "#2cbeaa",
@@ -328,7 +328,7 @@
   "territories": [
     {
       "id": 1,
-      "faction": "The Dusty Gals",
+      "faction": "Dusty Gals",
       "points": [
         [
           -103.828125,
@@ -396,7 +396,7 @@
     },
     {
       "id": 3,
-      "faction": "The Dock 3 Lads",
+      "faction": "Dock 3 Lads",
       "points": [
         [
           -101.28125,
@@ -492,7 +492,7 @@
     },
     {
       "id": 8,
-      "faction": "The Musician's Guild",
+      "faction": "Musician's Guild",
       "points": [
         [
           -62.25,
@@ -526,7 +526,7 @@
     },
     {
       "id": 9,
-      "faction": "The Musician's Guild",
+      "faction": "Musician's Guild",
       "points": [
         [
           -72.9453125,
@@ -616,7 +616,7 @@
     },
     {
       "id": 12,
-      "faction": "The Loopers",
+      "faction": "Loopers",
       "points": [
         [
           -89.328125,
@@ -674,7 +674,7 @@
     },
     {
       "id": 13,
-      "faction": "The Loopers",
+      "faction": "Loopers",
       "points": [
         [
           -101.5390625,
@@ -700,7 +700,7 @@
     },
     {
       "id": 14,
-      "faction": "The Loopers",
+      "faction": "Loopers",
       "points": [
         [
           -93.15625,
@@ -746,7 +746,7 @@
     },
     {
       "id": 15,
-      "faction": "The Mudbay Stags",
+      "faction": "Mudbay Stags",
       "points": [
         [
           -120.5,
@@ -784,7 +784,7 @@
     },
     {
       "id": 16,
-      "faction": "The Dock 3 Lads",
+      "faction": "Dock 3 Lads",
       "points": [
         [
           -101.65895373592002,
@@ -848,7 +848,7 @@
     },
     {
       "id": 19,
-      "faction": "The Gimlets",
+      "faction": "Gimlets",
       "points": [
         [
           -116.9375,
@@ -914,7 +914,7 @@
     },
     {
       "id": 20,
-      "faction": "The Gimlets",
+      "faction": "Gimlets",
       "points": [
         [
           -109.859375,
@@ -1006,7 +1006,7 @@
     },
     {
       "id": 23,
-      "faction": "The Dock 3 Lads",
+      "faction": "Dock 3 Lads",
       "points": [
         [
           -109.75,
@@ -1405,6 +1405,82 @@
           52.654440793471906
         ]
       ]
+    },
+    {
+      "id": 30,
+      "faction": "Library of Velaria",
+      "points": [
+        [
+          -52.53125,
+          116.77920282026922
+        ],
+        [
+          -54.359375,
+          116.12308095968605
+        ],
+        [
+          -56.125,
+          120.84090957626027
+        ],
+        [
+          -54.1875,
+          121.59076313121247
+        ]
+      ]
+    },
+    {
+      "id": 31,
+      "faction": "Guilds Mercantile",
+      "points": [
+        [
+          -56.9375,
+          116.45112053340817
+        ],
+        [
+          -59.59375,
+          115.51380358971792
+        ],
+        [
+          -61.21875,
+          120.0754127156771
+        ],
+        [
+          -58.453125,
+          120.98148576124434
+        ]
+      ]
+    },
+    {
+      "id": 32,
+      "faction": "Church of Alastor",
+      "points": [
+        [
+          -61.15625,
+          115.37276366208248
+        ],
+        [
+          -63.203125,
+          114.59166620900727
+        ],
+        [
+          -64.484375,
+          118.23158034033771
+        ],
+        [
+          -62.515625,
+          118.99705584435142
+        ]
+      ]
     }
+  ],
+  "favourites": [
+    "Poldergeists",
+    "Underlane Bank",
+    "Loopers",
+    "Velarian Army",
+    "Oxbow Holdings",
+    "Dusty Gals",
+    "Musician's Guild",
+    "Blackwater Sirens"
   ]
 }
