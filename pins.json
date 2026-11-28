@@ -271,6 +271,22 @@
       "faction": "Gimlets",
       "lat": -116.25,
       "lng": 46.91945255483422
+    },
+    {
+      "id": 39,
+      "name": "Silverglainne Lagoon",
+      "notes": "A small heavily polluted pool. All the waste of the Hangman runs through here. The Lagoon once encompassed most of the Hangman before it was drained during the Second Land Reclamation of 4E 371.",
+      "faction": null,
+      "lat": -124.0625,
+      "lng": 11.929518744894622
+    },
+    {
+      "id": 40,
+      "name": "The Vilemarsh",
+      "notes": "A stagnant wetland, foul smelling with run-off from the tanners and butchers of the western Hangman.",
+      "faction": null,
+      "lat": -119.96875,
+      "lng": 21.620509018533976
     }
   ],
   "factions": {
